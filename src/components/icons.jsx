@@ -3,19 +3,18 @@
  * Keeps page/section markup readable and icons reusable across the app.
  */
 
-// Brand mark — white open-book glyph on a brand-red rounded square. Matches the
-// Figma header logo; used app-wide (AppHeader + the session/quality headers).
+// Brand mark — the mascot's head (public/mascot-head-icon.svg). Used app-wide
+// (AppHeader + the session/quality headers). Decorative: the "ReadRight" text
+// beside it carries the name, so alt is empty.
 export function LogoMark({ size = 32 }) {
   return (
-    <span
-      className="flex shrink-0 items-center justify-center rounded-[8px] bg-brand"
-      style={{ width: size, height: size }}
-    >
-      <svg width={size * 0.6} height={size * 0.6} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M3 5h6a3 3 0 0 1 3 3v11a2.5 2.5 0 0 0-2.5-2.5H3z" />
-        <path d="M21 5h-6a3 3 0 0 0-3 3v11a2.5 2.5 0 0 1 2.5-2.5H21z" />
-      </svg>
-    </span>
+    <img
+      src="/mascot-head-icon.svg"
+      alt=""
+      width={size}
+      height={size}
+      className="shrink-0 object-contain"
+    />
   )
 }
 

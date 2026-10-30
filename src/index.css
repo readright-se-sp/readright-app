@@ -37,6 +37,17 @@
   --color-divider:     #f5eeee;
   --color-skeleton:    #efe8e7;
 
+  /* "Before we start" step cards + device-on pills */
+  --color-peach:       #fff3ec;
+  --color-sky:         #7e9be0;
+  --color-sky-soft:    #eef2fc;
+  --color-coral:       #e0483e;
+  --color-coral-soft:  #fdecea;
+  --color-mint:        #4caf7a;
+  --color-mint-soft:   #e6f5ec;
+  --color-mint-ink:    #2e7d52;
+  --color-mint-light:  #7ddba3;
+
   --shadow-card: 0px 4px 0px #e6dcc3;
 
   --font-display: 'Nunito Sans', sans-serif;

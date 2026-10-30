@@ -2,7 +2,7 @@
 // Auth state flows through AuthContext; this page never touches the Supabase
 // client directly. UI matches the Figma "LoginPage" design (node 35:2).
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 
 export default function LoginPage() {
@@ -14,10 +14,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Already signed in → skip login and go straight to the session screen
-  // (routing table: /login redirects to /session if authenticated).
+  // Already signed in → skip login and land on the dashboard
+  // (routing table: /login redirects to /dashboard if authenticated).
   useEffect(() => {
-    if (session) navigate('/pre-session', { replace: true })
+    if (session) navigate('/dashboard', { replace: true })
   }, [session, navigate])
 
   async function handleSubmit(e) {
@@ -32,7 +32,7 @@ export default function LoginPage() {
       )
       setLoading(false)
     } else {
-      navigate('/session')
+      navigate('/dashboard', { replace: true })
     }
   }
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
               aria-hidden="true"
               className="absolute size-[128px] rounded-full bg-[#ffb4ab]/20 blur-[12px]"
             />
-            <img src="/mascot.svg" alt="" className="relative h-[152px] w-auto" />
+            <img src="/mascot-reading.svg" alt="" className="relative h-[152px] w-auto" />
           </div>
 
           {/* Welcome text */}
@@ -182,13 +182,13 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Registration link (stub: single Learner role, no sign-up route yet) */}
+          {/* Registration link → learner self sign-up */}
           <div className="mt-6 flex flex-col items-center gap-2">
             <span className="text-[16px] font-normal leading-[24px] text-ink-soft">
               New to ReadRight?
             </span>
-            <button
-              type="button"
+            <Link
+              to="/register"
               className="inline-flex min-h-[44px] items-center gap-1 text-[18px] font-bold leading-[28px] text-brand"
             >
               Join ReadRight
@@ -196,7 +196,7 @@ export default function LoginPage() {
                 <path d="M5 12h14" />
                 <path d="m12 5 7 7-7 7" />
               </svg>
-            </button>
+            </Link>
           </div>
         </div>
       </div>

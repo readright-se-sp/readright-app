@@ -22,9 +22,4 @@ export default defineConfig({
   server: {
     port: 5173,
   },
-  preview: {
-    // Allow ephemeral tunnel hostnames (cloudflared / ngrok) for mobile PWA testing.
-    // Leading dot matches any subdomain, so it survives the URL changing each run.
-    allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.ngrok.io'],
-  },
 })
