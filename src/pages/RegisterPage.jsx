@@ -147,7 +147,7 @@ export default function RegisterPage() {
               aria-hidden="true"
               className="absolute size-[112px] rounded-full bg-[#ffb4ab]/20 blur-[12px]"
             />
-            <img src="/mascot-reading.svg" alt="" className="relative h-[120px] w-auto" />
+            <img src="/mascot-waving.svg" alt="" className="relative h-[120px] w-auto" />
           </div>
 
           <div className="flex flex-col items-center gap-2 text-center">
