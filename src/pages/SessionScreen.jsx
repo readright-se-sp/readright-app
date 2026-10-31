@@ -39,7 +39,10 @@ import ExitButton from '../components/ui/ExitButton'
 import { LogoMark } from '../components/icons'
 
 const MAX_RECORDING_MS = 5 * 60 * 1000
-const STEPS = ['Uploading', 'Transcribing', 'Scoring', 'Done']
+// ProcessingScreen stages: 0 sending · 1 listening · 2 checking · 3 almost done ·
+// 4 finished. The timer walks 0→2 while the analysis runs; 4 shows on success.
+const LAST_RUNNING_STEP = 2
+const FINISHED_STEP = 4
 
 function formatElapsed(totalSeconds) {
   const m = Math.floor(totalSeconds / 60)
@@ -114,18 +117,18 @@ export default function SessionScreen() {
     let step = 0
     const stepTimer = setInterval(() => {
       step += 1
-      if (step < STEPS.length - 1) setProcessingStep(step)
-    }, 800)
+      if (step <= LAST_RUNNING_STEP) setProcessingStep(step)
+    }, 2600)
     return () => clearInterval(stepTimer)
   }, [status])
 
-  // On success, hold the processing screen briefly (the "Done" step is shown via
-  // displayStep below), then navigate to results.
+  // On success, hold the processing screen briefly so the "Great job reading!"
+  // finish is seen (displayStep below), then navigate to results.
   useEffect(() => {
     if (status !== 'success' || !result || quizOpen) return
     const t = setTimeout(
       () => navigate('/results', { state: { result, passage, isFirstSession, quizAnswers } }),
-      400,
+      1200,
     )
     return () => clearTimeout(t)
   }, [status, result, quizOpen, navigate, passage, isFirstSession, quizAnswers])
@@ -245,8 +248,8 @@ export default function SessionScreen() {
   // --- Processing screen -----------------------------------------------------
   if (isProcessing) {
     // On success, show every step done (the brief "Done" flash before navigation).
-    const displayStep = status === 'success' ? STEPS.length - 1 : processingStep
-    return <ProcessingScreen steps={STEPS} step={displayStep} />
+    const displayStep = status === 'success' ? FINISHED_STEP : processingStep
+    return <ProcessingScreen step={displayStep} />
   }
 
   // --- Granted: "Read out loud" ----------------------------------------------
