@@ -79,8 +79,7 @@ readright-app/
 │   │   │   ├── WordDetective.jsx       # Miscue counts per type (the old Miscue Breakdown); opens WordReviewSheet when miscue_details exist
 │   │   │   ├── WordReviewSheet.jsx     # Per-word review: what was said → how it should sound (read aloud), sentence from the story
 │   │   │   ├── HowIRead.jsx            # Phil-IRI behavioral flags (habit-improvement framing)
-│   │   │   ├── resultsCopy.js          # Learner-facing copy + colours (miscue keys come from lib/philIri.js)
-│   │   │   └── ResultsSkeleton.jsx     # Loading skeleton for the results page
+│   │   │   └── resultsCopy.js          # Learner-facing copy + colours (miscue keys come from lib/philIri.js)
 │   │   ├── dashboard/
 │   │   │   ├── ProfileHeaderCard.jsx        # Learner profile header
 │   │   │   ├── StatsSummaryCard.jsx         # Summary stats card
