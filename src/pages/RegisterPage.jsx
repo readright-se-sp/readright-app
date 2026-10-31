@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
-import { GRADE_LEVELS } from '../utils/gradeLevels'
+import { LEARNER_GRADES } from '../utils/gradeLevels'
 const MIN_PASSWORD_LENGTH = 6
 
 const labelClass =
@@ -261,7 +261,7 @@ export default function RegisterPage() {
                       className={`${inputClass} appearance-none pl-4 pr-10 ${gradeLevel ? '' : 'text-card-border'}`}
                     >
                       <option value="" disabled>Select</option>
-                      {GRADE_LEVELS.map((g) => (
+                      {LEARNER_GRADES.map((g) => (
                         <option key={g} value={g} className="text-ink">Grade {g}</option>
                       ))}
                     </select>

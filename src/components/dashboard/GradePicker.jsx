@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useOnClickOutside } from '../../hooks/useOnClickOutside'
-import { GRADE_LEVELS } from '../../utils/gradeLevels'
+import { PASSAGE_GRADES } from '../../utils/gradeLevels'
 
 /**
  * GradePicker — compact "Grade 4 ▾" button that sits beside Start Reading and
@@ -51,7 +51,7 @@ export default function GradePicker({ value, onChange, align = 'left' }) {
         >
           <p className="mb-2 px-1 text-sm font-extrabold text-ink-soft">Which grade story?</p>
           <div className="grid grid-cols-3 gap-2">
-            {GRADE_LEVELS.map((g) => {
+            {PASSAGE_GRADES.map((g) => {
               const selected = g === value
               return (
                 <button
