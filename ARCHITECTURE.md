@@ -73,10 +73,13 @@ readright-app/
 │   │   │   ├── QuizParts.jsx           # Shared page/card/button/icon pieces
 │   │   │   └── quizLabels.js           # Learner-facing labels + grade → text-size tier
 │   │   ├── results/
-│   │   │   ├── ReadingLevelCard.jsx    # Reading-level badge card
-│   │   │   ├── StatCard.jsx            # WPM / word-recognition stat tile
-│   │   │   ├── MiscueBreakdown.jsx     # Miscue type counts
-│   │   │   ├── ReadingHabits.jsx       # Phil-IRI behavioral flags (habit-improvement framing)
+│   │   │   ├── ComprehensionCard.jsx   # "Did you understand the story?" — shown only when the result has comprehension_level (1–3)
+│   │   │   ├── ReadingScoreCard.jsx    # Reading Aloud Score: word recognition out of 100 + Phil-IRI level badge
+│   │   │   ├── SpeedCard.jsx           # "How fast did Lumi fly?" — words per minute vs the goal
+│   │   │   ├── WordDetective.jsx       # Miscue counts per type (the old Miscue Breakdown); opens WordReviewSheet when miscue_details exist
+│   │   │   ├── WordReviewSheet.jsx     # Per-word review: what was said → how it should sound (read aloud), sentence from the story
+│   │   │   ├── HowIRead.jsx            # Phil-IRI behavioral flags (habit-improvement framing)
+│   │   │   ├── resultsCopy.js          # Learner-facing copy + colours (miscue keys come from lib/philIri.js)
 │   │   │   └── ResultsSkeleton.jsx     # Loading skeleton for the results page
 │   │   ├── dashboard/
 │   │   │   ├── ProfileHeaderCard.jsx        # Learner profile header
@@ -112,6 +115,7 @@ readright-app/
 │   │   ├── usePassage.js           # Fetches passages from Supabase (fetchPassages) + random pick → { passage, loading, error, retry }
 │   │   ├── useComprehensionQuiz.js # PLACEHOLDER quiz questions → { questions, loading, error } (to be fetched from Supabase per passage)
 │   │   ├── useReadAloud.js         # Web Speech API read-aloud for quiz text → { supported, playing, readingIdx, play, stop }
+│   │   ├── useAudioClip.js         # Plays a short audio clip URL (learner's own word recordings, once the backend provides them)
 │   │   ├── useCurrentUser.js       # Resolves signed-in user → { user, displayName, initial }
 │   │   └── useAuth.js              # Supabase Auth state (session, user, signIn, signOut)
 │   │
