@@ -16,8 +16,15 @@ import { useEffect, useRef } from 'react'
  * GO1 checks against the same element (e.g. real-time monitoring on /session). A
  * callback ref — not forwardRef — because the parent needs the node as reactive
  * state to drive its check hooks. Memoize it in the parent or the ref will thrash.
+ *
+ * `className` (optional) overrides the default 4:3 card styling, e.g. to fill a
+ * container that resizes into the recording bubble on /session.
  */
-export function CameraPreview({ stream, onVideoNode }) {
+export function CameraPreview({
+  stream,
+  onVideoNode,
+  className = 'w-full aspect-[4/3] rounded-[12px] object-cover -scale-x-100 bg-ink',
+}) {
   const videoRef = useRef(null)
 
   // Merge the internal ref (used to own srcObject/play) with the optional report.
@@ -52,7 +59,7 @@ export function CameraPreview({ stream, onVideoNode }) {
       muted
       playsInline
       aria-label="Camera preview"
-      className="w-full aspect-[4/3] rounded-[12px] object-cover -scale-x-100 bg-ink"
+      className={className}
     />
   )
 }

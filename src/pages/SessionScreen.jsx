@@ -14,7 +14,9 @@
 //   pending/requesting → PermissionExplainer (in-app explanation before the
 //                        native browser prompt)
 //   denied             → PermissionDenied (device-specific recovery steps)
-//   granted            → passage + live CameraPreview + record/stop, then the
+//   granted            → "Read out loud": passage + live camera (a large preview
+//                        before recording, shrinking to a corner bubble while
+//                        recording) + Start reading / I'm done, then the
 //                        processing screen while results are computed.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -23,9 +25,10 @@ import { useMediaStream } from '../hooks/useMediaStream'
 import { useMediaRecorder } from '../hooks/useMediaRecorder'
 import { useAnalyzeSubmit } from '../hooks/useAnalyzeSubmit'
 import { useRecordingMonitor } from '../hooks/useRecordingMonitor'
+import { useCameraCheck } from '../hooks/useCameraCheck'
 import { detectPlatform } from '../utils/platform'
 import { CameraPreview } from '../components/quality/CameraPreview'
-import { RecordingChecks } from '../components/session/RecordingChecks'
+import { RecordingStatus } from '../components/session/RecordingStatus'
 import { PermissionExplainer } from '../components/quality/PermissionExplainer'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
 import ExitButton from '../components/ui/ExitButton'
@@ -33,20 +36,6 @@ import { LogoMark } from '../components/icons'
 
 const MAX_RECORDING_MS = 5 * 60 * 1000
 const STEPS = ['Uploading', 'Transcribing', 'Scoring', 'Done']
-
-// Static height + stagger per bar. Full literal class strings so Tailwind's
-// JIT scanner generates them (avoids inline style={{}}).
-const WAVE_BARS = [
-  'h-[8px] [animation-delay:0ms]',
-  'h-[15px] [animation-delay:90ms]',
-  'h-[22px] [animation-delay:180ms]',
-  'h-[13px] [animation-delay:270ms]',
-  'h-[20px] [animation-delay:360ms]',
-  'h-[11px] [animation-delay:450ms]',
-  'h-[18px] [animation-delay:540ms]',
-  'h-[9px] [animation-delay:630ms]',
-  'h-[16px] [animation-delay:720ms]',
-]
 
 function formatElapsed(totalSeconds) {
   const m = Math.floor(totalSeconds / 60)
@@ -83,6 +72,11 @@ export default function SessionScreen() {
 
   // Real-time GO1 monitoring — runs only while recording (active gates the checks).
   const monitor = useRecordingMonitor({ audioTrack, videoElement: videoEl, active: isRecording })
+  // Framing feedback on the large preview before a take: the oval turns green
+  // once the face is in place. Gated off while recording (the monitor runs its
+  // own camera check then) so only one MediaPipe instance is ever live.
+  const framing = useCameraCheck(isRecording ? null : videoEl)
+  const faceReady = !isRecording && framing.status === 'PASS'
   // Reason captured from the monitor so it survives the recording stopping (which
   // clears monitor.failure). stopReasonRef makes a quality stop claim the take once.
   const [qualityFailure, setQualityFailure] = useState(null)
@@ -160,10 +154,22 @@ export default function SessionScreen() {
   // never a generic "something went wrong".
   const errorMessage =
     status === 'timeout'
-      ? 'This is taking longer than usual. Please check your internet, then tap Start Recording to try again.'
+      ? 'This is taking longer than usual. Please check your internet, then tap Start reading to try again.'
       : status === 'error'
-        ? "We couldn't check your reading this time. Please tap Start Recording to try again."
+        ? "We couldn't check your reading this time. Please tap Start reading to try again."
         : null
+
+  // While recording, the first failing live check becomes a short tip beside the
+  // camera bubble (and turns the bubble amber). Camera framing gets the design's
+  // kid-friendly wording; the others reuse their hook's specific message.
+  const failingKey = isRecording
+    ? ['camera', 'lighting', 'mic', 'noise'].find((k) => monitor.checks[k]?.status === 'FAIL')
+    : null
+  const recordingProblem = failingKey
+    ? failingKey === 'camera'
+      ? 'Move back into the circle'
+      : monitor.checks[failingKey].message
+    : null
 
   // --- Permission gate -------------------------------------------------------
   // While probing existing permission (and silently acquiring when pre-granted),
@@ -269,26 +275,101 @@ export default function SessionScreen() {
     )
   }
 
-  // --- Granted: passage + live preview + record/stop -------------------------
+  // --- Granted: "Read out loud" ----------------------------------------------
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-page font-display">
-      <Header label="READING SESSION" onCancel={handleCancel} />
+    <div className="min-h-dvh flex items-center justify-center bg-[#f3e6e3] px-4 py-6 font-display">
+      <div className="flex w-full max-w-[380px] flex-col rounded-[28px] border-2 border-card-border bg-[#fffdfc] px-4 pt-4 pb-5 shadow-[0px_18px_40px_0px_rgba(120,60,50,0.12)]">
+        {/* Header: exit · logo · spacer */}
+        <div className="flex items-center justify-between">
+          <ExitButton onClick={handleCancel} className="bg-divider text-ink-soft" />
+          <div className="flex items-center gap-1.5">
+            <img src="/mascot-reading.svg" alt="" className="size-[34px] object-contain" />
+            <span className="text-[18px] font-black text-brand">ReadRight</span>
+          </div>
+          <div className="w-11" aria-hidden="true" />
+        </div>
 
-      <div className="flex flex-1 flex-col gap-4 px-4 pb-2 pt-5">
-        {/* Visible self-view so the learner can keep their face framed and adjust
-            while reading. Also feeds the live GO1 monitor (useRecordingMonitor). */}
-        <CameraPreview stream={stream} onVideoNode={setVideoNode} />
+        {/* Camera: one <video> throughout (it also feeds the live GO1 monitor),
+            restyled from a large framing preview into a small corner bubble while
+            recording so the learner's eyes stay on the passage. */}
+        <div className={`mt-3 flex items-center gap-3 ${isRecording ? 'min-h-[104px] justify-between' : ''}`}>
+          {isRecording && (
+            <RecordingStatus elapsed={formatElapsed(elapsed)} problem={recordingProblem} />
+          )}
+          <div
+            className={`relative flex-none transition-all duration-300 ${
+              isRecording ? (recordingProblem ? 'size-[104px]' : 'size-[84px]') : 'h-[210px] w-full'
+            }`}
+          >
+            <div
+              className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-[#4a3530] to-[#7a625b] ${
+                isRecording
+                  ? `rounded-full border-4 ${recordingProblem ? 'border-amber animate-attention-pulse' : 'border-mint'}`
+                  : 'rounded-[24px]'
+              }`}
+            >
+              <CameraPreview
+                stream={stream}
+                onVideoNode={setVideoNode}
+                className="absolute inset-0 h-full w-full object-cover -scale-x-100"
+              />
+              {!isRecording && (
+                <>
+                  <div
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute left-1/2 top-[46%] h-[150px] w-[118px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 transition-colors duration-300 ${
+                      faceReady ? 'border-solid border-mint' : 'border-dashed border-white/85'
+                    }`}
+                  />
+                  {/* Colour + icon + words (never colour alone). */}
+                  <div className="absolute inset-x-3 bottom-3 flex justify-center" aria-live="polite">
+                    {faceReady ? (
+                      <span className="flex items-center gap-1.5 rounded-full bg-mint-ink px-3.5 py-1.5 text-sm font-extrabold text-white">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="m5 13 4 4L19 7" />
+                        </svg>
+                        Great! You're ready to read
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-[#fffdfc]/95 px-3.5 py-1.5 text-sm font-extrabold text-ink">
+                        Keep your face in the circle
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            {isRecording && (
+              <span
+                aria-hidden="true"
+                className={`absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full border-[3px] border-[#fffdfc] text-sm font-black text-white ${
+                  recordingProblem ? 'bg-amber' : 'bg-mint'
+                }`}
+              >
+                {recordingProblem ? '!' : '✓'}
+              </span>
+            )}
+          </div>
+        </div>
 
-        <div className="rounded-[16px] border border-card-border bg-white p-5 shadow-card">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[20px] font-extrabold text-ink">Read This Out Loud</h2>
-            <span className="rounded-full bg-goal/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-goal">
+        {/* Passage */}
+        <div className="mt-3 rounded-[22px] border-2 border-card-border bg-[#fffdfc] px-4.5 pt-4.5 pb-5">
+          <div className="flex items-center justify-between gap-2.5">
+            <p className="text-[12px] font-extrabold uppercase tracking-[0.96px] text-ink-muted">
+              Read out loud
+            </p>
+            <span className="rounded-full bg-mint-soft px-2.5 py-1 text-sm font-extrabold text-mint-ink">
               Easy
             </span>
           </div>
+          {/* TODO(passage title): placeholder until fetchPassages selects a
+              `title` column from the `passages` table; then this shows it. */}
+          <h2 className="mt-1 mb-2.5 text-[22px] font-black leading-tight text-ink">
+            {passage?.title ?? "Today's Story"}
+          </h2>
           {passageError ? (
             <div role="alert" className="flex flex-col gap-3">
-              <p className="text-[16px] leading-[24px] text-ink">
+              <p className="text-base leading-[24px] text-ink">
                 We couldn't load your reading passage. Please check your internet, then tap Try Again.
               </p>
               <button
@@ -300,95 +381,57 @@ export default function SessionScreen() {
               </button>
             </div>
           ) : passage ? (
-            <p className="text-[18px] leading-[1.85] text-ink">{passage.text}</p>
+            <p className="text-[18px] font-semibold leading-[1.7] text-ink">{passage.text}</p>
           ) : (
-            <p className="text-[16px] leading-[24px] text-ink-muted" aria-live="polite">
+            <p className="text-base leading-[24px] text-ink-muted" aria-live="polite">
               Getting your passage ready…
             </p>
           )}
         </div>
 
-        <p className="px-4 text-center text-[14px] text-ink-muted">
-          Read this passage aloud, clearly and at your normal pace.
-        </p>
-
-        {errorMessage && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 rounded-[12px] border border-brand/30 bg-brand/5 px-4 py-3"
-          >
+        {/* Submit error, or a real-time check failed → the take was discarded. */}
+        {(errorMessage || (!isRecording && qualityFailure)) && (
+          <div role="alert" className="mt-3 flex items-start gap-2.5 rounded-[18px] bg-coral-soft px-3.5 py-3">
             <span
-              className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-bold text-white"
               aria-hidden="true"
+              className="flex size-7 flex-none items-center justify-center rounded-full bg-coral text-base font-black text-white"
             >
               !
             </span>
-            <p className="text-[14px] leading-[20px] text-ink">{errorMessage}</p>
-          </div>
-        )}
-
-        {isRecording && (
-          <div className="flex items-center gap-3 rounded-[12px] border border-brand/20 bg-brand/5 px-4 py-3">
-            <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-brand" aria-hidden="true" />
-            <span className="text-[14px] font-semibold text-brand">Recording…</span>
-            <div className="flex flex-1 items-center justify-center gap-[3px]" aria-hidden="true">
-              {WAVE_BARS.map((bar, i) => (
-                <span key={i} className={`w-[3px] rounded-full bg-brand/70 animate-pulse ${bar}`} />
-              ))}
-            </div>
-            <span className="shrink-0 text-[15px] font-semibold tabular-nums text-ink">
-              {formatElapsed(elapsed)}
-            </span>
-          </div>
-        )}
-
-        {/* Live GO1 checks — only while recording (see useRecordingMonitor). */}
-        {isRecording && <RecordingChecks checks={monitor.checks} />}
-
-        {/* A real-time check failed → recording was stopped and discarded. */}
-        {!isRecording && qualityFailure && (
-          <div
-            role="alert"
-            className="flex items-start gap-3 rounded-[12px] border border-brand/30 bg-brand/5 px-4 py-3"
-          >
-            <span
-              className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-bold text-white"
-              aria-hidden="true"
-            >
-              !
-            </span>
-            <p className="text-[14px] leading-[20px] text-ink">
-              {qualityFailure.message} Let's try that again.
+            <p className="text-[15px] font-bold text-ink">
+              {errorMessage ?? `${qualityFailure.message} Let's try that again.`}
             </p>
           </div>
         )}
-      </div>
 
-      <div className="px-4 pb-8 pt-3">
         {isRecording ? (
           <button
             type="button"
             onClick={handleStop}
-            className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full border-[2.5px] border-brand bg-white py-4 text-[17px] font-bold 
-text-brand"
+            className="mt-4.5 flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-full border-[2.5px] border-brand bg-[#fffdfc] py-4 text-[20px] font-extrabold text-brand shadow-[0px_5px_0px_#e6cfca] active:translate-y-1 active:shadow-[0px_1px_0px_#e6cfca]"
           >
             <span className="size-3.5 rounded-[3px] bg-brand" aria-hidden="true" />
-            Stop Recording
+            I&apos;m done!
           </button>
         ) : (
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={!passage}
-            className={`flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full py-4 text-[17px] font-bold text-white ${
-              passage
-                ? 'bg-brand shadow-[0px_4px_0px_#871f1a]'
-                : 'cursor-not-allowed bg-card-border'
-            }`}
-          >
-            <span className="size-3 rounded-full bg-white" aria-hidden="true" />
-            {qualityFailure ? 'Record Again' : 'Start Recording'}
-          </button>
+          <>
+            <p className="mt-3.5 text-center text-[15px] font-bold text-ink-soft">
+              Read clearly, at your own pace
+            </p>
+            <button
+              type="button"
+              onClick={handleStart}
+              disabled={!passage}
+              className={`mt-3 flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-full py-4 text-[20px] font-extrabold ${
+                passage
+                  ? 'bg-brand text-white shadow-[0px_5px_0px_#7a1f1a] active:translate-y-1 active:shadow-[0px_1px_0px_#7a1f1a]'
+                  : 'cursor-not-allowed bg-[#e6d3ce] text-ink-muted'
+              }`}
+            >
+              <span className={`size-3.5 rounded-full ${passage ? 'bg-white' : 'bg-ink-muted'}`} aria-hidden="true" />
+              {qualityFailure ? 'Try again' : 'Start reading'}
+            </button>
+          </>
         )}
       </div>
     </div>

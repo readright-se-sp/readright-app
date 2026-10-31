@@ -48,6 +48,13 @@
   --color-mint-ink:    #2e7d52;
   --color-mint-light:  #7ddba3;
 
+  /* Recording bubble: amber halo while a live check needs attention */
+  --animate-attention-pulse: attention-pulse 1.4s ease-out infinite;
+  @keyframes attention-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230, 168, 23, 0.55); }
+    50%      { box-shadow: 0 0 0 12px rgba(230, 168, 23, 0); }
+  }
+
   --shadow-card: 0px 4px 0px #e6dcc3;
 
   --font-display: 'Nunito Sans', sans-serif;

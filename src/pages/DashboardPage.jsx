@@ -66,16 +66,17 @@ import EmptyState from '../components/dashboard/EmptyState'
 import ErrorState from '../components/dashboard/ErrorState'
 import GradePicker from '../components/dashboard/GradePicker'
 import { useCurrentUser } from '../hooks/useCurrentUser'
-import { DEFAULT_GRADE } from '../utils/gradeLevels'
+import { DEFAULT_GRADE, toPassageGrade } from '../utils/gradeLevels'
 
 export default function DashboardPage() {
   const { sessions, loading, error } = useSessionHistory()
   const navigate = useNavigate()
   const { user } = useCurrentUser()
   // Story grade for the next reading. Until the learner picks one, show the
-  // grade they registered with (user_metadata.grade_level), else the default.
+  // grade they registered with (user_metadata.grade_level, clamped to the
+  // Phil-IRI story range — a Grade 1 learner starts on Grade 2), else the default.
   const [pickedGrade, setPickedGrade] = useState(null)
-  const passageGrade = pickedGrade ?? user?.user_metadata?.grade_level ?? DEFAULT_GRADE
+  const passageGrade = pickedGrade ?? toPassageGrade(user?.user_metadata?.grade_level ?? DEFAULT_GRADE)
 
   // Entry point into a new reading: routes through the permission explainer
   // (/pre-session) → GO1 gate (/quality-check) → /session. Keeps the dashboard
