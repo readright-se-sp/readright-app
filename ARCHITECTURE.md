@@ -64,7 +64,14 @@ readright-app/
 │   │   │   ├── PermissionExplainer.jsx # In-app camera/mic explanation shown BEFORE native prompt
 │   │   │   └── PermissionDenied.jsx    # Device-specific recovery screen (switches on errorKind + platform)
 │   │   ├── session/
-│   │   │   └── RecordingStatus.jsx     # Beside the camera bubble while recording: "Recording 0:42" pill, or a fix-it tip when a live check fails
+│   │   │   ├── RecordingStatus.jsx     # Beside the camera bubble while recording: "Recording 0:42" pill, or a fix-it tip when a live check fails
+│   │   │   ├── ProcessingScreen.jsx    # "Analyzing your reading…" step screen (shown after the quiz if the analysis is still running)
+│   │   │   └── LeaveSessionDialog.jsx  # "Stop reading now?" — confirm before leaving during recording or the quiz
+│   │   ├── quiz/                       # Comprehension quiz, rendered inside /session after "I'm done!" while /analyze runs
+│   │   │   ├── ComprehensionQuiz.jsx   # Screen flow: intro → questions → review → done → onFinish(answers)
+│   │   │   ├── QuizIntro.jsx / QuizQuestion.jsx / QuizReview.jsx / QuizDone.jsx
+│   │   │   ├── QuizParts.jsx           # Shared page/card/button/icon pieces
+│   │   │   └── quizLabels.js           # Learner-facing labels + grade → text-size tier
 │   │   ├── results/
 │   │   │   ├── ReadingLevelCard.jsx    # Reading-level badge card
 │   │   │   ├── StatCard.jsx            # WPM / word-recognition stat tile
@@ -103,6 +110,8 @@ readright-app/
 │   │   ├── useSessionStorage.js    # Wraps saveSessionRecord — StrictMode once-guard → { saveStatus }
 │   │   ├── useSessionHistory.js    # Supabase SELECT sessions ORDER BY session_timestamp ASC
 │   │   ├── usePassage.js           # Fetches passages from Supabase (fetchPassages) + random pick → { passage, loading, error, retry }
+│   │   ├── useComprehensionQuiz.js # PLACEHOLDER quiz questions → { questions, loading, error } (to be fetched from Supabase per passage)
+│   │   ├── useReadAloud.js         # Web Speech API read-aloud for quiz text → { supported, playing, readingIdx, play, stop }
 │   │   ├── useCurrentUser.js       # Resolves signed-in user → { user, displayName, initial }
 │   │   └── useAuth.js              # Supabase Auth state (session, user, signIn, signOut)
 │   │

@@ -29,6 +29,10 @@ import { useCameraCheck } from '../hooks/useCameraCheck'
 import { detectPlatform } from '../utils/platform'
 import { CameraPreview } from '../components/quality/CameraPreview'
 import { RecordingStatus } from '../components/session/RecordingStatus'
+import { ProcessingScreen } from '../components/session/ProcessingScreen'
+import { ComprehensionQuiz } from '../components/quiz/ComprehensionQuiz'
+import { LeaveSessionDialog } from '../components/session/LeaveSessionDialog'
+import { useCurrentUser } from '../hooks/useCurrentUser'
 import { PermissionExplainer } from '../components/quality/PermissionExplainer'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
 import ExitButton from '../components/ui/ExitButton'
@@ -84,8 +88,21 @@ export default function SessionScreen() {
 
   const [processingStep, setProcessingStep] = useState(0)
 
-  // Keep the processing screen up while the analysis is in flight AND until we
-  // navigate away on success — avoids a flash of the record screen in between.
+  // Comprehension quiz: shown right after "I'm done!" while the analysis runs in
+  // the background (this page must stay mounted, or useAnalyzeSubmit aborts the
+  // request). Results open only once the learner finishes the quiz.
+  // All-or-nothing by design: leaving /session before results (exit, back, close)
+  // aborts the analysis and drops the quiz answers, and nothing is saved — the
+  // session is only stored once /results opens. Keep the quiz inside /session.
+  const { user } = useCurrentUser()
+  const [quizOpen, setQuizOpen] = useState(false)
+  const [quizAnswers, setQuizAnswers] = useState(null)
+  // "Stop reading now?" — only asked when leaving would discard work.
+  const [confirmLeave, setConfirmLeave] = useState(false)
+
+  // After the quiz, keep the processing screen up while the analysis is still in
+  // flight AND until we navigate away on success — avoids a flash of the record
+  // screen in between. If the analysis failed, the record screen shows the error.
   const isProcessing = status === 'submitting' || status === 'success'
 
   // Cosmetic step indicator, scoped to the in-flight submit. setState happens
@@ -105,13 +122,13 @@ export default function SessionScreen() {
   // On success, hold the processing screen briefly (the "Done" step is shown via
   // displayStep below), then navigate to results.
   useEffect(() => {
-    if (status !== 'success' || !result) return
+    if (status !== 'success' || !result || quizOpen) return
     const t = setTimeout(
-      () => navigate('/results', { state: { result, passage, isFirstSession } }),
+      () => navigate('/results', { state: { result, passage, isFirstSession, quizAnswers } }),
       400,
     )
     return () => clearTimeout(t)
-  }, [status, result, navigate, passage, isFirstSession])
+  }, [status, result, quizOpen, navigate, passage, isFirstSession, quizAnswers])
 
   // Real-time quality failure: capture the reason BEFORE stopping (stopping flips
   // isRecording false, which makes the monitor clear its own failure), then stop
@@ -129,7 +146,14 @@ export default function SessionScreen() {
     const file = await stop()
     if (!file) return
     setProcessingStep(0)
+    setQuizAnswers(null)
+    setQuizOpen(true)
     submit(file, passage.id)
+  }
+
+  function handleQuizFinish(answers) {
+    setQuizAnswers(answers)
+    setQuizOpen(false)
   }
 
   // Bail out of the session back to the dashboard. If a take is in progress,
@@ -140,6 +164,17 @@ export default function SessionScreen() {
     if (isRecording) stop().catch(() => {})
     navigate('/dashboard')
   }
+
+  // ✕ while recording or during the quiz asks first (the reading would be lost);
+  // before a take there's nothing to lose, so it leaves straight away.
+  function requestExit() {
+    if (isRecording || quizOpen) setConfirmLeave(true)
+    else handleCancel()
+  }
+
+  const leaveDialog = confirmLeave && (
+    <LeaveSessionDialog onStay={() => setConfirmLeave(false)} onLeave={handleCancel} />
+  )
 
   function handleStart() {
     if (!passage) return // nothing to read yet — the button is disabled too
@@ -192,87 +227,26 @@ export default function SessionScreen() {
     return <PermissionDenied platform={platform} errorKind={errorKind} onRetry={retry} />
   }
 
+  // --- Comprehension quiz (analysis keeps running underneath) -----------------
+  if (quizOpen) {
+    return (
+      <>
+        <ComprehensionQuiz
+          passage={passage}
+          grade={user?.user_metadata?.grade_level}
+          onFinish={handleQuizFinish}
+          onExit={requestExit}
+        />
+        {leaveDialog}
+      </>
+    )
+  }
+
   // --- Processing screen -----------------------------------------------------
   if (isProcessing) {
     // On success, show every step done (the brief "Done" flash before navigation).
     const displayStep = status === 'success' ? STEPS.length - 1 : processingStep
-    return (
-      <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-page font-display">
-        <Header />
-        <div className="flex flex-1 flex-col px-5 pb-6 pt-5">
-          {/* Top reassurance banner */}
-          <div className="flex items-start gap-3 rounded-[12px] bg-brand/5 px-4 py-3">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-ink-soft text-[12px] font-bold text-white" aria-hidden="true">
-              i
-            </span>
-            <p className="text-[14px] leading-[20px] text-ink-soft">
-              Still working — this can take up to 2 minutes. Please don't close the app.
-            </p>
-          </div>
-
-          {/* Center: heading + step progress */}
-          <div className="flex flex-1 flex-col justify-center py-8">
-            <h2 className="text-center text-[24px] font-extrabold text-ink">
-              Analyzing your reading…
-            </h2>
-            <p className="mt-2 text-center text-[16px] leading-[24px] text-ink-soft">
-              This usually takes less than a minute. Please wait.
-            </p>
-
-            {/* Stepper — circles joined by connectors; state by icon + colour */}
-            <ol className="mt-8 flex w-full items-start" aria-live="polite">
-              {STEPS.map((label, i) => {
-                const done = i < displayStep
-                const active = i === displayStep
-                const last = i === STEPS.length - 1
-                return (
-                  <li key={label} className="flex flex-1 flex-col items-center gap-2">
-                    <div className="flex w-full items-center">
-                      <span className={`h-[3px] flex-1 rounded-full ${i === 0 ? 'opacity-0' : done || active ? 'bg-goal' : 'bg-card-border'}`} />
-                      {done ? (
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-goal text-[14px] font-bold text-white">
-                          ✓
-                        </span>
-                      ) : active ? (
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full border-[3px] border-brand bg-white">
-                          <span className="size-2.5 rounded-full bg-brand" />
-                        </span>
-                      ) : (
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-card-border">
-                          <span className="size-2 rounded-full bg-white/70" />
-                        </span>
-                      )}
-                      <span className={`h-[3px] flex-1 rounded-full ${last ? 'opacity-0' : done ? 'bg-goal' : 'bg-card-border'}`} />
-                    </div>
-                    <span
-                      className={`text-center text-[11px] font-bold uppercase tracking-[0.04em] ${
-                        active ? 'text-brand' : done ? 'text-goal' : 'text-ink-muted'
-                      }`}
-                    >
-                      {label}{last ? '!' : ''}
-                    </span>
-                  </li>
-                )
-              })}
-            </ol>
-          </div>
-
-          {/* Bottom warning banner + footer */}
-          <div className="flex items-start gap-3 rounded-[12px] bg-brand/5 px-4 py-3">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-brand text-[12px] font-bold text-white" aria-hidden="true">
-              i
-            </span>
-            <p className="text-[14px] leading-[20px] text-ink">
-              Do not close this screen while your reading is being analyzed.
-            </p>
-          </div>
-
-          <p className="mt-4 text-center text-[12px] text-ink-muted">
-            Powered by Phil-IRI Assessment Engine
-          </p>
-        </div>
-      </div>
-    )
+    return <ProcessingScreen steps={STEPS} step={displayStep} />
   }
 
   // --- Granted: "Read out loud" ----------------------------------------------
@@ -281,7 +255,7 @@ export default function SessionScreen() {
       <div className="flex w-full max-w-[380px] flex-col rounded-[28px] border-2 border-card-border bg-[#fffdfc] px-4 pt-4 pb-5 shadow-[0px_18px_40px_0px_rgba(120,60,50,0.12)]">
         {/* Header: exit · logo · spacer */}
         <div className="flex items-center justify-between">
-          <ExitButton onClick={handleCancel} className="bg-divider text-ink-soft" />
+          <ExitButton onClick={requestExit} className="bg-divider text-ink-soft" />
           <div className="flex items-center gap-1.5">
             <img src="/mascot-reading.svg" alt="" className="size-[34px] object-contain" />
             <span className="text-[18px] font-black text-brand">ReadRight</span>
@@ -434,6 +408,7 @@ export default function SessionScreen() {
           </>
         )}
       </div>
+      {leaveDialog}
     </div>
   )
 }
