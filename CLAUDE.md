@@ -17,6 +17,11 @@ npm run preview    # Preview production build locally
 npm run lint       # ESLint flat config — `eslint .` (ESLint 10, react-hooks + react-refresh)
 ```
 
+**Previewing the UI without the backend (`npm run dev` only — production ignores these):**
+- `?fakeAnalysis` on any page URL (once per tab) skips FastAPI after "I'm done!" — a full reading → quiz → analyzing screen → sample results. `=20` sets seconds, `=fail` simulates an error, `=0` turns it off. See `src/utils/devPreview.js`.
+- Opening `/results` directly shows a sample result: `?sample=instructional` (default) / `independent` / `frustration` / `allMiscues`, add `&first` for the first-time note. See `src/data/sampleResults.js`.
+- Fake and sample results carry `dev_sample: true` and are never saved to Supabase.
+
 These four are the **only** scripts defined in `package.json`. There is **no test runner configured yet** — `npm test` does not exist and Vitest/RTL are not installed (see the Testing row below). Do not invoke `vite` or `eslint` directly unless debugging a specific tool issue.
 
 ---

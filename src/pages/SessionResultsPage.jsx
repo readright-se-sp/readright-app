@@ -12,8 +12,8 @@
  *
  * Data source: React Router location.state — SessionScreen navigates with
  * { state: { result, passage, isFirstSession, quizAnswers } } (see
- * ARCHITECTURE.md). Falls back to calling submitRecording() directly for
- * direct-navigation testing.
+ * ARCHITECTURE.md). Opened directly with no result, it redirects to the
+ * dashboard; in `npm run dev` it shows a sample result instead (see below).
  *
  * On mount it also persists the session to Supabase with retry (RR-041, REA-26)
  * via the useSessionStorage hook. The save never blocks rendering: if all
@@ -35,9 +35,9 @@
  *
  * SRS NFR-P2: Must render within 3 seconds of receiving data.
  */
-import { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { submitRecording } from '../lib/api'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { sampleResults } from '../data/sampleResults'
+import { isDevSample } from '../utils/devPreview'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { LogoMark } from '../components/icons'
@@ -46,36 +46,34 @@ import { ReadingScoreCard } from '../components/results/ReadingScoreCard'
 import { SpeedCard } from '../components/results/SpeedCard'
 import { WordDetective } from '../components/results/WordDetective'
 import { HowIRead } from '../components/results/HowIRead'
-import ResultsSkeleton from '../components/results/ResultsSkeleton'
-
-// Dev-only: a real `passages` row UUID, used only on direct navigation (no route
-// state). The real flow gets passage.id from SessionScreen's route state instead.
-const DEV_PASSAGE_ID = 'ccf4b227-b8c9-497f-a20b-b91072e3cfb5'
 
 export default function SessionResultsPage() {
-  const { state } = useLocation()
+  const { state, search } = useLocation()
   const navigate = useNavigate()
   const { user } = useCurrentUser()
-  const sessionResult = state?.result ?? state ?? null
-  const isFirstSession = state?.isFirstSession ?? false
-  const [result, setResult] = useState(sessionResult)
-  const [passageId, setPassageId] = useState(state?.passage?.id ?? null)
-  const [loading, setLoading] = useState(!sessionResult)
+  const sessionResult = state?.result ?? null
 
-  // Direct-navigation / dev fallback: no result in route state → call the API
-  // directly so the page can be exercised on its own.
-  useEffect(() => {
-    if (sessionResult) return
-    submitRecording(null, DEV_PASSAGE_ID).then((r) => {
-      setResult(r)
-      setPassageId(DEV_PASSAGE_ID)
-      setLoading(false)
-    })
-  }, [sessionResult])
+  // Dev-only preview (npm run dev): opening /results directly shows a sample
+  // result from data/sampleResults.js — ?sample=instructional (default),
+  // independent, frustration or allMiscues; add &first for the first-time note.
+  // Production builds never use samples.
+  const params = new URLSearchParams(search)
+  const sampleResult =
+    !sessionResult && import.meta.env.DEV
+      ? { ...(sampleResults[params.get('sample')] ?? sampleResults.instructional), dev_sample: true }
+      : null
+  const result = sessionResult ?? sampleResult
+  const isFirstSession = state?.isFirstSession || (!!sampleResult && params.has('first'))
 
-  // Persist the session once results are available (RR-041 · REA-26). The hook
-  // owns the StrictMode-safe once-guard; the save never blocks rendering (NFR-R1).
+  // Persist the session once (RR-041 · REA-26). The hook owns the StrictMode-safe
+  // once-guard; the save never blocks rendering (NFR-R1). Fake/sample results
+  // (dev only) get no passage id, so they are never saved.
+  const passageId = isDevSample(result) ? null : (state?.passage?.id ?? null)
   const { saveStatus } = useSessionStorage(result, passageId)
+
+  // Results only exist right after a reading — opened directly (bookmark,
+  // refresh), there's nothing to show, so go back to the dashboard.
+  if (!result) return <Navigate to="/dashboard" replace />
 
   const firstName = user?.user_metadata?.display_name?.trim().split(/\s+/)[0]
   const storyTitle = state?.passage?.title
@@ -98,57 +96,51 @@ export default function SessionResultsPage() {
           </button>
         </header>
 
-        {loading && <ResultsSkeleton />}
+        <div className="flex flex-col items-center pb-1 pt-1.5 text-center">
+          <span className="flex size-32 items-center justify-center rounded-full bg-coral-soft ring-4 ring-[#f6dcd8]">
+            <img src="/mascot-reading.svg" alt="" className="w-[100px]" />
+          </span>
+          <h1 className="mt-1.5 text-[28px] font-black leading-[1.15]">
+            {firstName ? `You did it, ${firstName}!` : 'You did it!'}
+          </h1>
+          <p className="mt-1 text-base font-semibold text-ink-soft">
+            {storyTitle ? (
+              <>Here’s how you read <b className="text-brand">{storyTitle}</b></>
+            ) : (
+              'Here’s how you read today'
+            )}
+          </p>
+        </div>
 
-        {!loading && result && (
-          <>
-            <div className="flex flex-col items-center pb-1 pt-1.5 text-center">
-              <span className="flex size-32 items-center justify-center rounded-full bg-coral-soft ring-4 ring-[#f6dcd8]">
-                <img src="/mascot-reading.svg" alt="" className="w-[100px]" />
-              </span>
-              <h1 className="mt-1.5 text-[28px] font-black leading-[1.15]">
-                {firstName ? `You did it, ${firstName}!` : 'You did it!'}
-              </h1>
-              <p className="mt-1 text-base font-semibold text-ink-soft">
-                {storyTitle ? (
-                  <>Here’s how you read <b className="text-brand">{storyTitle}</b></>
-                ) : (
-                  'Here’s how you read today'
-                )}
-              </p>
-            </div>
+        {isFirstSession && <FirstResultsNote />}
+        {saveStatus === 'failed' && <SaveFailureBanner />}
 
-            {isFirstSession && <FirstResultsNote />}
-            {saveStatus === 'failed' && <SaveFailureBanner />}
+        <ComprehensionCard level={result.comprehension_level} />
+        <ReadingScoreCard score={result.word_recognition_pct} readingLevel={result.reading_level} />
+        <SpeedCard wpm={result.wpm} />
+        <div className="mt-2">
+          <WordDetective result={result} />
+        </div>
+        <div className="mt-2">
+          <HowIRead result={result} />
+        </div>
 
-            <ComprehensionCard level={result.comprehension_level} />
-            <ReadingScoreCard score={result.word_recognition_pct} readingLevel={result.reading_level} />
-            <SpeedCard wpm={result.wpm} />
-            <div className="mt-2">
-              <WordDetective result={result} />
-            </div>
-            <div className="mt-2">
-              <HowIRead result={result} />
-            </div>
-
-            <div className="mt-2 flex flex-col gap-2.5">
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="min-h-[58px] rounded-[18px] bg-brand text-lg font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-[0_1px_0_#7a1f1b]"
-              >
-                See My Stars
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/session')}
-                className="min-h-[58px] rounded-[18px] border-2 border-brand bg-white text-lg font-black text-brand"
-              >
-                Read Another Story
-              </button>
-            </div>
-          </>
-        )}
+        <div className="mt-2 flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="min-h-[58px] rounded-[18px] bg-brand text-lg font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-[0_1px_0_#7a1f1b]"
+          >
+            See My Stars
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/session')}
+            className="min-h-[58px] rounded-[18px] border-2 border-brand bg-white text-lg font-black text-brand"
+          >
+            Read Another Story
+          </button>
+        </div>
       </div>
     </div>
   )
