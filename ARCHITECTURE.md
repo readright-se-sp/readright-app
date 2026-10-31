@@ -64,7 +64,7 @@ readright-app/
 │   │   │   ├── PermissionExplainer.jsx # In-app camera/mic explanation shown BEFORE native prompt
 │   │   │   └── PermissionDenied.jsx    # Device-specific recovery screen (switches on errorKind + platform)
 │   │   ├── session/
-│   │   │   └── RecordingChecks.jsx     # Live GO1 indicator strip shown during recording (icon + label + ✓/✗)
+│   │   │   └── RecordingStatus.jsx     # Beside the camera bubble while recording: "Recording 0:42" pill, or a fix-it tip when a live check fails
 │   │   ├── results/
 │   │   │   ├── ReadingLevelCard.jsx    # Reading-level badge card
 │   │   │   ├── StatCard.jsx            # WPM / word-recognition stat tile
@@ -318,7 +318,7 @@ The GO1 checks don't stop once recording begins — `SessionScreen` keeps watchi
 - It **reuses** `useCameraCheck` / `useLightingCheck` / `useNoiseCheck` unchanged, and swaps `useMicCheck` (which latches PASS for the one-time gate) for **`useMicActivity`** — a non-latching counterpart that tracks time-since-last-loud-sample and FAILs after a continuous silence window. The silence window lives inside that hook because silence is a *duration*, not an instantaneous state (normal reading pauses between words would flap a downstream timer).
 - Checks run **only while `active`** (i.e. recording). The monitor passes `null` inputs when inactive, relying on each leaf hook's `if (!input) return` guard to fully tear down MediaPipe + AudioContexts — no background CPU cost when idle.
 - A per-check **watchdog** arms a timer while a check reads `FAIL` and cancels it the moment the check returns to PASS/CHECKING, so only a *sustained* failure trips. Grace windows: mic 10s (enforced inside `useMicActivity`), camera / lighting / ambient-noise 5s each, plus a short startup cushion for the video checks so MediaPipe warm-up at the start of a take isn't counted. A `firedRef` latch raises exactly one `failure` per take.
-- On `failure`, `SessionScreen` **captures the reason first** (the monitor clears its own `failure` once recording stops), then stops the recorder and **discards** the file — it does not submit. The learner sees the specific reason and a "Record Again" button (`handleStart` calls `clearFailure()` so a stale failure can't re-fire). During recording the four statuses render as `components/session/RecordingChecks.jsx` (icon + label + ✓/✗, never colour alone). This keeps the failure → re-record loop within the 5-step session-flow constraint.
+- On `failure`, `SessionScreen` **captures the reason first** (the monitor clears its own `failure` once recording stops), then stops the recorder and **discards** the file — it does not submit. The learner sees the specific reason and a "Try again" button (`handleStart` calls `clearFailure()` so a stale failure can't re-fire). During recording the camera preview shrinks to a corner bubble (green ring + ✓ when all checks pass; amber, pulsing, + ! when one fails) and `components/session/RecordingStatus.jsx` shows a "Recording" timer pill or the failing check's fix-it tip — state is never colour alone. This keeps the failure → re-record loop within the 5-step session-flow constraint.
 
 ---
 

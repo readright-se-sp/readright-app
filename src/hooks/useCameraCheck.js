@@ -1,6 +1,6 @@
 // useCameraCheck.js — STUB (RR-003)
 // Implementation: see SDD GO1 / GO4 module for spec.
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 
 const WASM_TIMEOUT_MS = 10000
 // Forgiving thresholds for young learners on phones: accept faces that are
@@ -14,30 +14,33 @@ const YAW_THRESHOLD = 0.13
 export function useCameraCheck(videoElement) {
   const [cameraStatus, setCameraStatus] = useState('CHECKING')
   const [message, setMessage] = useState('Initializing camera check...')
-  const faceMeshRef = useRef(null)
-  const timeoutRef = useRef(null)
-  const mountedRef = useRef(true)
 
   useEffect(() => {
     if (!videoElement) return
-    mountedRef.current = true
+
+    // Per-run state (not refs): the input toggles quickly (e.g. /session gating
+    // the check on/off around a take), and a later run must never touch an
+    // earlier run's FaceMesh — closing an already-deleted instance throws a
+    // BindingError that crashes the page.
+    let cancelled = false
+    let faceMesh = null
+
+    // Auto-pass fallback if WASM doesn't load in time
+    const timeoutId = setTimeout(() => {
+      if (cancelled) return
+      console.warn('[GO1] MediaPipe WASM failed to load — camera check auto-passed')
+      setCameraStatus('PASS')
+      setMessage('Camera: Ready')
+    }, WASM_TIMEOUT_MS)
 
     async function init() {
-      // Auto-pass fallback if WASM doesn't load in time
-      timeoutRef.current = setTimeout(() => {
-        if (!mountedRef.current) return
-        console.warn('[GO1] MediaPipe WASM failed to load — camera check auto-passed')
-        setCameraStatus('PASS')
-        setMessage('Camera: Ready')
-      }, WASM_TIMEOUT_MS)
-
       try {
         const { FaceMesh } = await import('@mediapipe/face_mesh')
 
-        if (!mountedRef.current) return
-        clearTimeout(timeoutRef.current)
+        if (cancelled) return
+        clearTimeout(timeoutId)
 
-        const faceMesh = new FaceMesh({
+        faceMesh = new FaceMesh({
           locateFile: (file) =>
             `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
         })
@@ -49,7 +52,7 @@ export function useCameraCheck(videoElement) {
         })
 
         faceMesh.onResults((results) => {
-          if (!mountedRef.current) return
+          if (cancelled) return
 
           if (!results.multiFaceLandmarks?.length) {
             setCameraStatus('FAIL')
@@ -80,21 +83,24 @@ export function useCameraCheck(videoElement) {
           setMessage('Camera: Ready')
         })
 
-        faceMeshRef.current = faceMesh
-
-        // Feed frames to MediaPipe
+        // Feed frames to MediaPipe. A send() in flight when cleanup closes the
+        // instance rejects — expected during teardown, so stop quietly.
         async function detectLoop() {
-          if (!mountedRef.current) return
-          if (videoElement.readyState >= 2) {
-            await faceMesh.send({ image: videoElement })
+          if (cancelled) return
+          try {
+            if (videoElement.readyState >= 2) {
+              await faceMesh.send({ image: videoElement })
+            }
+          } catch {
+            return
           }
           requestAnimationFrame(detectLoop)
         }
         detectLoop()
 
       } catch (err) {
-        if (!mountedRef.current) return
-        clearTimeout(timeoutRef.current)
+        if (cancelled) return
+        clearTimeout(timeoutId)
         console.warn('[GO1] MediaPipe failed to load — camera check auto-passed', err)
         setCameraStatus('PASS')
         setMessage('Camera: Ready')
@@ -104,9 +110,16 @@ export function useCameraCheck(videoElement) {
     init()
 
     return () => {
-      mountedRef.current = false
-      clearTimeout(timeoutRef.current)
-      faceMeshRef.current?.close()
+      cancelled = true
+      clearTimeout(timeoutId)
+      // Close only this run's instance, exactly once. Guard anyway: a throw
+      // from MediaPipe here would otherwise take down the whole screen.
+      try {
+        faceMesh?.close()
+      } catch (err) {
+        console.warn('[GO1] FaceMesh close failed', err)
+      }
+      faceMesh = null
     }
   }, [videoElement])
 
