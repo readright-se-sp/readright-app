@@ -119,8 +119,7 @@ readright-app/
 ├── .env.local                      # Gitignored. VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY,
 │                                   #   VITE_FASTAPI_URL, VITE_API_KEY
 ├── index.html
-├── vite.config.js                  # Vite config — @vitejs/plugin-react + @tailwindcss/vite (no vite-plugin-pwa);
-│                                   #   preview.allowedHosts permits cloudflared/ngrok tunnels for mobile PWA testing
+├── vite.config.js                  # Vite config — @vitejs/plugin-react + @tailwindcss/vite (no vite-plugin-pwa)
 └── package.json                    # Tailwind v4 is zero-config — no tailwind.config.js or postcss.config.js
 ```
 
@@ -146,14 +145,14 @@ Navigation after submission: `SessionScreen` navigates to `/results` using `useN
 
 ### Planned (stubbed) routes
 
-`LoginPage` renders two secondary actions that are **stubs** — the UI exists per the Figma design, but no route, page, or handler is wired up yet:
+`LoginPage` renders two secondary actions. Registration is wired up; password recovery is still a **stub** (UI only, no route/handler):
 
 | Trigger (LoginPage) | Intended destination | Status |
 |---|---|---|
-| "Join ReadRight" (registration link) | `/register` → `RegisterPage` | Stub — button has no `onClick`/route. No sign-up flow exists. |
+| "Join ReadRight" (registration link) | `/register` → `RegisterPage` | **Implemented** — `<Link>` to `RegisterPage`, which calls `signUp` from `useAuth` (via `AuthContext`). Full name / grade / age are stored as Supabase Auth `user_metadata` (`display_name`, `grade_level`, `age`). |
 | "Forgot?" (password recovery) | `/forgot-password` → recovery flow | Stub — button has no `onClick`/route. No recovery flow exists. |
 
-These are inert `type="button"` elements today. Wiring them up requires adding the route in `src/App.jsx`, the page under `src/pages/`, and the corresponding Supabase Auth call (`signUp` / `resetPasswordForEmail`) in a hook. Until then, do not present them as working flows.
+"Forgot?" is still an inert `type="button"`. Wiring it up requires adding the route in `src/App.jsx`, the page under `src/pages/`, and the corresponding Supabase Auth call (`resetPasswordForEmail`) in a hook. Until then, do not present it as a working flow.
 
 ---
 

@@ -49,6 +49,7 @@
  *  ✦ Page loads within 5 s on simulated 4G (SRS NFR-P3)
  *  ✦ Visual matches Figma "My Profile (English)"
  */
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSessionHistory } from '../hooks/useSessionHistory'
 import { levelToNum } from '../lib/philIri'
@@ -63,14 +64,27 @@ import BehavioralHistoryTable from '../components/dashboard/BehavioralHistoryTab
 import DashboardSkeleton from '../components/dashboard/DashboardSkeleton'
 import EmptyState from '../components/dashboard/EmptyState'
 import ErrorState from '../components/dashboard/ErrorState'
+import GradePicker from '../components/dashboard/GradePicker'
+import { useCurrentUser } from '../hooks/useCurrentUser'
+import { DEFAULT_GRADE } from '../utils/gradeLevels'
 
 export default function DashboardPage() {
   const { sessions, loading, error } = useSessionHistory()
   const navigate = useNavigate()
-  // Entry point into a new reading: routes through the GO1 gate (/quality-check),
-  // which auto-acquires the camera when already permitted and then flows to
-  // /session. Keeps the dashboard a hub instead of a dead end.
-  const startReading = () => navigate('/quality-check')
+  const { user } = useCurrentUser()
+  // Story grade for the next reading. Until the learner picks one, show the
+  // grade they registered with (user_metadata.grade_level), else the default.
+  const [pickedGrade, setPickedGrade] = useState(null)
+  const passageGrade = pickedGrade ?? user?.user_metadata?.grade_level ?? DEFAULT_GRADE
+
+  // Entry point into a new reading: routes through the permission explainer
+  // (/pre-session) → GO1 gate (/quality-check) → /session. Keeps the dashboard
+  // a hub instead of a dead end.
+  // TODO(passage grade): UI only — passageGrade is passed in route state but
+  // nothing reads it yet. To make it functional, forward it /pre-session →
+  // /quality-check → /session and filter usePassage/fetchPassages by grade
+  // (needs a grade column on the `passages` table).
+  const startReading = () => navigate('/pre-session', { state: { passageGrade } })
 
   const levelData = sessions.map((s, i) => ({
     label: `S${i + 1}`,
@@ -99,7 +113,12 @@ export default function DashboardPage() {
 
       {!error && loading && <DashboardSkeleton />}
 
-      {!error && !loading && sessions.length === 0 && <EmptyState onStart={startReading} />}
+      {!error && !loading && sessions.length === 0 && (
+        <EmptyState
+          onStart={startReading}
+          gradePicker={<GradePicker value={passageGrade} onChange={setPickedGrade} align="center" />}
+        />
+      )}
 
       {!error && !loading && sessions.length > 0 && (
         <>
@@ -113,16 +132,17 @@ export default function DashboardPage() {
 
           {/* Fixed primary action so a new reading is always one tap away,
               without scrolling past every chart. PageShell's pb-24 clears it. */}
-          <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-[480px] bg-gradient-to-t from-page via-page to-transparent px-5 pb-5 pt-8">
+          <div className="fixed inset-x-0 bottom-0 z-20 mx-auto flex w-full max-w-[480px] items-stretch gap-2.5 bg-gradient-to-t from-page via-page to-transparent px-5 pb-5 pt-8">
+            <GradePicker value={passageGrade} onChange={setPickedGrade} />
             <button
               type="button"
               onClick={startReading}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-brand py-4 text-[17px] font-extrabold text-white shadow-[0px_4px_0px_#871f1a]"
+              className="flex min-h-[44px] flex-1 items-center justify-center gap-2 rounded-full bg-brand py-4 text-[17px] font-extrabold text-white shadow-[0px_4px_0px_#871f1a]"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M8 5v14l11-7z" />
               </svg>
-              Start New Reading
+              Start Reading
             </button>
           </div>
         </>
