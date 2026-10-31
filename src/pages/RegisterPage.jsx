@@ -61,8 +61,9 @@ function ShowPasswordToggle({ shown, onToggle }) {
 }
 
 // Plain-language validation for a Grade 4 learner; null when the form is OK.
-function validate({ fullName, password, confirmPassword, gradeLevel, age, agreed }) {
+function validate({ fullName, email, password, confirmPassword, gradeLevel, age, agreed }) {
   if (!fullName.trim()) return 'Please type your full name so we know what to call you.'
+  if (!email.trim()) return 'Please type your email so you can log in later.'
   if (password.length < MIN_PASSWORD_LENGTH)
     return `Your password is too short. Please use at least ${MIN_PASSWORD_LENGTH} letters or numbers.`
   if (password !== confirmPassword)
@@ -83,7 +84,7 @@ function friendlySignUpError(error) {
   if (error.code === 'weak_password') {
     return 'That password is too easy to guess. Please try a longer one with letters and numbers.'
   }
-  if (error.code === 'email_address_invalid' || /invalid.*email/i.test(error.message)) {
+  if (error.code === 'email_address_invalid' || /invalid.*email|email.*invalid/i.test(error.message)) {
     return 'That email does not look right. Please check it and tap Create Account again.'
   }
   return 'We could not create your account right now. Please check your internet, then tap Create Account again.'
@@ -112,7 +113,7 @@ export default function RegisterPage() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-    const problem = validate({ fullName, password, confirmPassword, gradeLevel, age, agreed })
+    const problem = validate({ fullName, email, password, confirmPassword, gradeLevel, age, agreed })
     if (problem) {
       setError(problem)
       return
