@@ -90,6 +90,9 @@ export async function saveSessionRecord(assessmentResult, passageId) {
  * `title` column — SessionScreen shows a static heading instead. Selection
  * (random per session) is the caller's job; see the `usePassage` hook.
  *
+ * The DB primary-key column is `passage_id`; it is mapped to `id` in the
+ * returned objects so downstream code keeps using `passage.id`.
+ *
  * SELECT is allowed for the learner under RLS; ordering by `created_at` keeps
  * the returned list stable so random picks are reproducible across a render.
  *
@@ -99,13 +102,13 @@ export async function saveSessionRecord(assessmentResult, passageId) {
 export async function fetchPassages() {
   const { data, error } = await supabase
     .from('passages')
-    .select('id, text, word_count')
+    .select('passage_id, text, word_count')
     .order('created_at', { ascending: true })
 
   if (error) throw new Error(error.message)
 
   return (data ?? []).map((row) => ({
-    id: row.id,
+    id: row.passage_id,
     text: row.text,
     wordCount: row.word_count,
   }))
