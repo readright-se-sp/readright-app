@@ -10,7 +10,7 @@
  *   ?fakeAnalysis on any page      → a full reading finishes with "instructional"
  *                                    (utils/devPreview.js)
  *
- * Shapes match the flat /analyze response (lib/api.js, lib/supabase.js), plus
+ * Shapes match the flat /analyze response (lib/api.js), plus
  * the not-yet-sent optional fields comprehension_level / miscue_details on some
  * samples so those sections can be previewed. Samples are never saved.
  */

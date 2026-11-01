@@ -7,16 +7,18 @@
  * Assignee: Christian  |  Priority: High  |  Estimate: 3 pts
  * Created : 2026-05-17 by Reev Santillan
  *
- * Fetches the authenticated learner's full session history from Supabase,
- * ordered chronologically (oldest → newest) so chart data always renders
- * left-to-right across time.
+ * Returns the learner's session history, ordered chronologically (oldest →
+ * newest) so chart data always renders left-to-right across time.
+ *
+ * TODO(backend): static samples for now (data/sampleData.js) — replace with the
+ * backend call. The frontend must not query Supabase directly.
  *
  * Returns
  * -------
- *   sessions  {Array}   All rows from the `sessions` table for this learner,
- *                       sorted by session_timestamp ASC.
- *   loading   {boolean} True while the initial query is in-flight.
- *   error     {object|null} Supabase PostgrestError if the query fails.
+ *   sessions  {Array}   All session rows for this learner, sorted by
+ *                       session_timestamp ASC.
+ *   loading   {boolean} True while the initial load is in-flight.
+ *   error     {object|null} Set if the load fails.
  *
  * Session row shape — 19 fields matching AssessmentResultJSON in api.js:
  *   Core identifiers  : learner_id, passage_id, session_timestamp
@@ -39,34 +41,9 @@
  *                That ticket will consume this same hook to power the Miscue
  *                Patterns and Behavioral History sections. Do NOT alter the
  *                return shape { sessions, loading, error } or the query order.
- *
- * Security note
- * -------------
- *   Supabase RLS ensures each learner only sees their own rows. The session
- *   persists across reloads (see supabase.js), so this hook re-fetches on each
- *   mount against the restored session; it returns an empty array only if the
- *   session is genuinely absent or expired.
  */
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { sampleSessions } from '../data/sampleData'
 
 export function useSessionHistory() {
-  const [sessions, setSessions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-
-  useEffect(() => {
-    async function fetchSessions() {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .order('session_timestamp', { ascending: true })
-      if (error) setError(error)
-      else setSessions(data)
-      setLoading(false)
-    }
-    fetchSessions()
-  }, [])
-
-  return { sessions, loading, error }
+  return { sessions: sampleSessions, loading: false, error: null }
 }

@@ -15,9 +15,10 @@
  * ARCHITECTURE.md). Opened directly with no result, it redirects to the
  * dashboard; in `npm run dev` it shows a sample result instead (see below).
  *
- * On mount it also persists the session to Supabase with retry (RR-041, REA-26)
- * via the useSessionStorage hook. The save never blocks rendering: if all
- * retries fail, results still show with a non-blocking banner (NFR-R1).
+ * On mount it also persists the session (RR-041, REA-26) via the
+ * useSessionStorage hook — currently a no-op until the backend call is wired in.
+ * The save never blocks rendering: if it fails, results still show with a
+ * non-blocking banner (NFR-R1).
  *
  * Sections (in order):
  *   1. "You did it, <name>!" hero
