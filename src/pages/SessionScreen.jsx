@@ -51,8 +51,8 @@ function formatElapsed(totalSeconds) {
 }
 
 export default function SessionScreen() {
-  // Passages come from Supabase (single source of truth) — fetched + randomly
-  // picked by usePassage. May still be loading when the camera is granted; the
+  // Passages are static samples for now (see usePassage), randomly picked by
+  // usePassage. May still be loading when the camera is granted; the
   // preview/GO1 checks must never be blocked on it (CLAUDE.md), only the
   // passage card and the Start button wait for content.
   const { passage, error: passageError, retry: retryPassage } = usePassage()
@@ -339,8 +339,8 @@ export default function SessionScreen() {
               Easy
             </span>
           </div>
-          {/* TODO(passage title): placeholder until fetchPassages selects a
-              `title` column from the `passages` table; then this shows it. */}
+          {/* TODO(passage title): placeholder until the backend passage data
+              includes a title; then this shows it. */}
           <h2 className="mt-1 mb-2.5 text-[22px] font-black leading-tight text-ink">
             {passage?.title ?? "Today's Story"}
           </h2>

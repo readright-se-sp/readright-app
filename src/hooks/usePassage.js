@@ -1,14 +1,12 @@
 /**
  * usePassage
  *
- * Loads the reading passages from Supabase (the single source of truth — see
- * lib/supabase.js → fetchPassages) and picks one at random for this session.
- * Replaces the old hardcoded `src/data/passages.js` bank.
+ * Loads the reading passages (static samples for now — see data/sampleData.js)
+ * and picks one at random for this session.
  *
- * Mirrors the GO1 check hooks' lib/hook split: the network call is the pure
- * `fetchPassages` in lib/, this hook owns the React state and lifecycle. The
- * passage is chosen once per mount; `retry()` re-fetches (and re-picks) so a
- * failed load gives the learner a recovery action.
+ * TODO(backend): replace fetchPassages with the backend call. The frontend must
+ * not query Supabase directly. The passage is chosen once per mount; `retry()`
+ * re-fetches (and re-picks) so a failed load gives the learner a recovery action.
  *
  * Returns
  * -------
@@ -18,7 +16,9 @@
  *   retry    {function}     Re-runs the fetch + random pick.
  */
 import { useCallback, useEffect, useState } from 'react'
-import { fetchPassages } from '../lib/supabase'
+import { samplePassages } from '../data/sampleData'
+
+const fetchPassages = async () => samplePassages
 
 export function usePassage() {
   const [passage, setPassage] = useState(null)

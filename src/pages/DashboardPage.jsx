@@ -26,12 +26,11 @@
  *
  *  Loading  DashboardSkeleton while useSessionHistory fetches.
  *  Empty    EmptyState when sessions.length === 0 after load.
- *  Error    ErrorState (with Retry) when Supabase returns an error.
+ *  Error    ErrorState (with Retry) when the load fails.
  *
  * ── Data ─────────────────────────────────────────────────────────────────
  *
- *  Source : useSessionHistory() → Supabase `sessions` table (all columns).
- *  Seed   : See zplan.md §"Seed Data" — test account test.learner@readright.dev.
+ *  Source : useSessionHistory() → static samples for now (data/sampleData.js).
  *  Domain : reading-level mapping lives in lib/philIri.js.
  *
  * ── Dependencies ──────────────────────────────────────────────────────────
@@ -83,7 +82,7 @@ export default function DashboardPage() {
   // a hub instead of a dead end.
   // TODO(passage grade): UI only — passageGrade is passed in route state but
   // nothing reads it yet. To make it functional, forward it /pre-session →
-  // /quality-check → /session and filter usePassage/fetchPassages by grade
+  // /quality-check → /session and filter usePassage by grade
   // (needs a grade column on the `passages` table).
   const startReading = () => navigate('/pre-session', { state: { passageGrade } })
 
