@@ -16,7 +16,12 @@
  * in via the `signal` option (RR-050 · REA-34).
  */
 
+import { sampleResults } from '../data/sampleResults'
 import { fakeAnalyze, getFakeAnalysis } from '../utils/devPreview'
+
+// TODO(backend): every reading finishes with a static sample result for now, and
+// the recording is not uploaded. Set to false to use the real POST /analyze below.
+const USE_SAMPLE_RESULTS = true
 
 /** Error that carries the FastAPI failure `code` (e.g. 'DB_WRITE_FAILED') for callers. */
 export class ApiError extends Error {
@@ -42,6 +47,8 @@ export async function submitRecording(file, passageId, { signal } = {}) {
     const fake = getFakeAnalysis()
     if (fake) return fakeAnalyze(fake, signal)
   }
+
+  if (USE_SAMPLE_RESULTS) return { ...sampleResults.instructional, dev_sample: true }
 
   const formData = new FormData()
   formData.append('file', file)
