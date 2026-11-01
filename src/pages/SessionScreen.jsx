@@ -43,6 +43,9 @@ const MAX_RECORDING_MS = 5 * 60 * 1000
 // 4 finished. The timer walks 0→2 while the analysis runs; 4 shows on success.
 const LAST_RUNNING_STEP = 2
 const FINISHED_STEP = 4
+// The processing screen stays up at least this long after the quiz, even when
+// the result is already in (static samples return instantly).
+const MIN_ANALYZING_MS = 5000
 
 function formatElapsed(totalSeconds) {
   const m = Math.floor(totalSeconds / 60)
@@ -51,8 +54,8 @@ function formatElapsed(totalSeconds) {
 }
 
 export default function SessionScreen() {
-  // Passages come from Supabase (single source of truth) — fetched + randomly
-  // picked by usePassage. May still be loading when the camera is granted; the
+  // Passages are static samples for now (see usePassage), randomly picked by
+  // usePassage. May still be loading when the camera is granted; the
   // preview/GO1 checks must never be blocked on it (CLAUDE.md), only the
   // passage card and the Start button wait for content.
   const { passage, error: passageError, retry: retryPassage } = usePassage()
@@ -100,6 +103,8 @@ export default function SessionScreen() {
   const { user } = useCurrentUser()
   const [quizOpen, setQuizOpen] = useState(false)
   const [quizAnswers, setQuizAnswers] = useState(null)
+  // True for MIN_ANALYZING_MS after the quiz; holds back the finish and navigation.
+  const [analyzingHold, setAnalyzingHold] = useState(false)
   // "Stop reading now?" — only asked when leaving would discard work.
   const [confirmLeave, setConfirmLeave] = useState(false)
 
@@ -111,27 +116,34 @@ export default function SessionScreen() {
   // Cosmetic step indicator, scoped to the in-flight submit. setState happens
   // only inside the timer callback (async — never synchronously in the effect
   // body); the step is reset in handleStop before submit starts. The effect
-  // cleanup clears the timer when the status leaves 'submitting'.
+  // cleanup clears the timer when the analysis and the post-quiz hold are over.
+  const stepsRunning = status === 'submitting' || analyzingHold
   useEffect(() => {
-    if (status !== 'submitting') return
+    if (!stepsRunning) return
     let step = 0
     const stepTimer = setInterval(() => {
       step += 1
       if (step <= LAST_RUNNING_STEP) setProcessingStep(step)
-    }, 2600)
+    }, 1700)
     return () => clearInterval(stepTimer)
-  }, [status])
+  }, [stepsRunning])
+
+  useEffect(() => {
+    if (!analyzingHold) return
+    const t = setTimeout(() => setAnalyzingHold(false), MIN_ANALYZING_MS)
+    return () => clearTimeout(t)
+  }, [analyzingHold])
 
   // On success, hold the processing screen briefly so the "Great job reading!"
   // finish is seen (displayStep below), then navigate to results.
   useEffect(() => {
-    if (status !== 'success' || !result || quizOpen) return
+    if (status !== 'success' || !result || quizOpen || analyzingHold) return
     const t = setTimeout(
       () => navigate('/results', { state: { result, passage, isFirstSession, quizAnswers } }),
       1200,
     )
     return () => clearTimeout(t)
-  }, [status, result, quizOpen, navigate, passage, isFirstSession, quizAnswers])
+  }, [status, result, quizOpen, analyzingHold, navigate, passage, isFirstSession, quizAnswers])
 
   // Real-time quality failure: capture the reason BEFORE stopping (stopping flips
   // isRecording false, which makes the monitor clear its own failure), then stop
@@ -157,6 +169,7 @@ export default function SessionScreen() {
   function handleQuizFinish(answers) {
     setQuizAnswers(answers)
     setQuizOpen(false)
+    setAnalyzingHold(true)
   }
 
   // Bail out of the session back to the dashboard. If a take is in progress,
@@ -182,6 +195,7 @@ export default function SessionScreen() {
   function handleStart() {
     if (!passage) return // nothing to read yet — the button is disabled too
     reset() // clear any prior error/timeout before a fresh take
+    setAnalyzingHold(false)
     setQualityFailure(null)
     monitor.clearFailure() // drop the monitor's stale failure so it can't re-fire
     stopReasonRef.current = false
@@ -248,7 +262,7 @@ export default function SessionScreen() {
   // --- Processing screen -----------------------------------------------------
   if (isProcessing) {
     // On success, show every step done (the brief "Done" flash before navigation).
-    const displayStep = status === 'success' ? FINISHED_STEP : processingStep
+    const displayStep = status === 'success' && !analyzingHold ? FINISHED_STEP : processingStep
     return <ProcessingScreen step={displayStep} />
   }
 
@@ -339,8 +353,8 @@ export default function SessionScreen() {
               Easy
             </span>
           </div>
-          {/* TODO(passage title): placeholder until fetchPassages selects a
-              `title` column from the `passages` table; then this shows it. */}
+          {/* TODO(passage title): placeholder until the backend passage data
+              includes a title; then this shows it. */}
           <h2 className="mt-1 mb-2.5 text-[22px] font-black leading-tight text-ink">
             {passage?.title ?? "Today's Story"}
           </h2>

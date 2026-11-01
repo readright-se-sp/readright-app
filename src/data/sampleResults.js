@@ -1,7 +1,10 @@
 /**
- * sampleResults.js — dev-only AssessmentResultJSON fixtures (npm run dev only).
+ * sampleResults.js — static AssessmentResultJSON samples.
  *
- * Used to review the UI without the FastAPI backend:
+ * TODO(backend): every finished reading shows "instructional" for now, in all
+ * builds (USE_SAMPLE_RESULTS in lib/api.js).
+ *
+ * Also used to review the UI without a reading (npm run dev only):
  *   /results                       → instructional (direct navigation, dev only)
  *   /results?sample=independent    → independent
  *   /results?sample=frustration    → frustration
@@ -10,7 +13,7 @@
  *   ?fakeAnalysis on any page      → a full reading finishes with "instructional"
  *                                    (utils/devPreview.js)
  *
- * Shapes match the flat /analyze response (lib/api.js, lib/supabase.js), plus
+ * Shapes match the flat /analyze response (lib/api.js), plus
  * the not-yet-sent optional fields comprehension_level / miscue_details on some
  * samples so those sections can be previewed. Samples are never saved.
  */

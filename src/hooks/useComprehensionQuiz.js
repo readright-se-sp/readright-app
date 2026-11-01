@@ -2,9 +2,9 @@
  * useComprehensionQuiz — the comprehension questions shown after a reading.
  *
  * TODO(quiz questions): PLACEHOLDER. Returns the same sample questions for every
- * passage. Once the backend stores Phil-IRI comprehension questions in Supabase,
- * fetch them here for `passage.id` (pure fetch in lib/supabase.js, state in this
- * hook — same split as usePassage) and keep this return shape.
+ * passage. Once the backend serves Phil-IRI comprehension questions,
+ * fetch them here for `passage.id` (pure fetch in lib/api.js, state in this
+ * hook) and keep this return shape.
  *
  * Question shape: { id, question, options: string[] } — 3 or 4 options. The
  * learner may also answer "I don't know" (recorded as choice 'idk').

@@ -33,14 +33,14 @@
  *  Start Reading is always shown, so a reading is one tap away in every state.
  *  Loading  DashboardLoading while useSessionHistory fetches.
  *  Empty    DashboardEmpty when sessions.length === 0 after load.
- *  Error    DashboardError — "Try again" re-runs the query (retry).
+ *  Error    DashboardError — "Try again" re-runs the load (retry).
  *
  *  Dev preview (npm run dev only): /dashboard?sample, ?sample=basic|empty|loading|error
  *  — see data/sampleDashboard.js. Production builds never use samples.
  *
  * ── Data ─────────────────────────────────────────────────────────────────
  *
- *  Source : useSessionHistory() → Supabase `sessions` table (all columns).
+ *  Source : useSessionHistory() → static samples for now (data/sampleData.js).
  *  Domain : reading-level mapping lives in lib/philIri.js.
  *
  * ── Dependencies ──────────────────────────────────────────────────────────
@@ -108,7 +108,7 @@ export default function DashboardPage() {
   // (/pre-session) → GO1 gate (/quality-check) → /session.
   // TODO(passage grade): UI only — passageGrade is passed in route state but
   // nothing reads it yet. To make it functional, forward it /pre-session →
-  // /quality-check → /session and filter usePassage/fetchPassages by grade
+  // /quality-check → /session and filter usePassage by grade
   // (needs a grade column on the `passages` table).
   const startReading = () => navigate('/pre-session', { state: { passageGrade } })
 
