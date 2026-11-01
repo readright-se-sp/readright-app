@@ -1,10 +1,9 @@
 /**
- * The dashboard's non-data states. Start Reading stays above all of them, so
+ * The dashboard's non-data states. Start Reading stays pinned below all of them, so
  * a learner can always begin a story.
  */
 
 const PREVIEWS = [
-  { glyph: '★', title: 'Your stars', sub: 'Earn stars for every story.' },
   { glyph: '3', title: 'Your streak', sub: 'Read on more days in a row.' },
   { glyph: '↑', title: 'How fast Lumi flies', sub: 'Watch your speed grow.' },
 ]
@@ -19,7 +18,7 @@ export function DashboardEmpty() {
           Read your first story to see your progress here!
         </p>
         <p className="max-w-[300px] text-[17px] text-ink-soft">
-          Lumi will keep track of your stars, your speed and your tricky words.
+          Lumi will keep track of your streak, your speed and your tricky words.
         </p>
       </section>
       <ul className="flex flex-col gap-3 opacity-75" aria-hidden="true">

@@ -1,59 +1,37 @@
-import { useState } from 'react'
-import { DashboardCard, Face } from './DashboardParts'
-import { LEVEL_FACES } from './dashboardCopy'
-
-const SHOWN = 5
+import { Link } from 'react-router-dom'
+import { DashboardCard } from './DashboardParts'
+import { shortDate, storiesSummary } from './dashboardCopy'
+import { storyGrades } from '../../lib/dashboardStats'
 
 /**
- * "Past readings" — newest first, with date and reading-level pill. Shows the
- * last five; "See all" expands the list.
+ * "Past readings" preview — how many stories, at which grades, and the last
+ * story read. "See all my readings" opens the full list on /history.
  *
- * TODO(past results): rows aren't tappable yet — opening an old reading's
- * results needs the full result saved per session.
- * TODO(passage title): the `passages` table has no title yet, so rows say
- * "Story N" unless a session carries `passage_title`.
+ * TODO(passage title): the `passages` table has no title yet, so the last
+ * story says "Story N" unless the session carries `passage_title`.
+ * TODO(passage grade): sessions don't save the story grade yet, so the grades
+ * are left out unless sessions carry `passage_grade`.
  */
-export function PastReadings({ sessions }) {
-  const [showAll, setShowAll] = useState(false)
-  const rows = sessions.map((s, i) => ({ ...s, number: i + 1 })).reverse()
-  const visible = showAll ? rows : rows.slice(0, SHOWN)
+export function PastReadings({ sessions, historyPath = '/history' }) {
+  const last = sessions.at(-1)
 
   return (
-    <DashboardCard className="gap-2.5">
-      <div className="flex items-center justify-between gap-2">
+    <DashboardCard className="gap-3">
+      <div className="flex flex-col gap-0.5">
         <h2 className="text-[21px] font-black leading-tight">Past readings</h2>
-        {rows.length > SHOWN && (
-          <button
-            type="button"
-            onClick={() => setShowAll((v) => !v)}
-            aria-expanded={showAll}
-            className="flex min-h-11 min-w-11 items-center px-1 text-[17px] font-black text-brand"
-          >
-            {showAll ? 'Show less' : 'See all ›'}
-          </button>
-        )}
+        <p className="text-[17px] text-ink-soft">{storiesSummary(sessions.length, storyGrades(sessions))}</p>
       </div>
-      <ul className="flex flex-col gap-2.5">
-        {visible.map((s) => {
-          const face = LEVEL_FACES[s.reading_level]
-          return (
-            <li key={s.id ?? s.session_timestamp} className="flex min-h-[68px] flex-col justify-center gap-1.5 rounded-2xl border-2 border-card-border bg-[#fff9f6] px-3.5 py-2.5">
-              <span className="text-[17px] font-black leading-tight">{s.passage_title ?? `Story ${s.number}`}</span>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[15px] font-bold text-ink-muted">
-                  {new Date(s.session_timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </span>
-                {face && (
-                  <span className={`flex items-center gap-1.5 rounded-full border-[1.5px] py-0.5 pl-1 pr-2.5 ${face.card} ${face.border} ${face.ink}`}>
-                    <Face mood={face.mood} size={22} />
-                    <span className="text-sm font-extrabold">{face.label}</span>
-                  </span>
-                )}
-              </div>
-            </li>
-          )
-        })}
-      </ul>
+      <div className="flex flex-col gap-1 rounded-2xl border-2 border-card-border bg-[#fff9f6] px-4 py-3">
+        <span className="text-[15px] font-bold text-ink-muted">Last story · {shortDate(last.session_timestamp)}</span>
+        <span className="text-lg font-black leading-tight">{last.passage_title ?? `Story ${sessions.length}`}</span>
+      </div>
+      <Link
+        to={historyPath}
+        className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-brand bg-[#fff9f6] px-4 text-xl font-black text-brand shadow-card active:translate-y-1 active:shadow-none"
+      >
+        See all my readings
+        <span aria-hidden="true">›</span>
+      </Link>
     </DashboardCard>
   )
 }

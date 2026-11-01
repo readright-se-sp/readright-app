@@ -43,11 +43,6 @@ export function WeekTile({ face, week }) {
         }`}
       >
         {face && <Face mood={face.mood} />}
-        {face?.stars && (
-          <span className="text-[15px] tracking-[2px]" aria-hidden="true">
-            {face.stars}
-          </span>
-        )}
         <span className="text-sm font-extrabold leading-tight">{face ? face.label : 'No reading'}</span>
       </div>
       <span className="text-center text-sm font-bold leading-tight text-ink-muted">{week}</span>

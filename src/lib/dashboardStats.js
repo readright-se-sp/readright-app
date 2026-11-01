@@ -6,14 +6,9 @@
  * start on Monday and use the device's local time.
  *
  * Placeholders the team still has to decide are marked TODO:
- *   TODO(weekly goal)   — WEEKLY_GOAL is a guess
- *   TODO(stars)         — how stars are earned
  *   TODO(weekly level)  — how one week's reading level is measured
  */
 import { behaviorRows } from './philIri'
-
-// TODO(weekly goal): stories per week the learner aims for — confirm with the team.
-export const WEEKLY_GOAL = 3
 
 export const WEEK_LABELS = ['3 weeks ago', '2 weeks ago', 'Last week', 'This week']
 
@@ -76,24 +71,6 @@ export function readingStreaks(sessions, now = new Date()) {
 }
 
 /**
- * TODO(stars): placeholder rule until the team decides how stars are earned —
- * 1 star per finished reading, +1 when it was read at the Independent level.
- */
-export function totalStars(sessions) {
-  return sessions.reduce((sum, s) => sum + 1 + (s.reading_level === 'Independent' ? 1 : 0), 0)
-}
-
-/** Badges derived from the session history. */
-export function badges(sessions, bestStreak) {
-  return [
-    { key: 'first', name: 'First story', glyph: '1', earned: sessions.length > 0 },
-    { key: 'streak3', name: '3-day streak', glyph: '3', earned: bestStreak >= 3 },
-    { key: 'own', name: 'Read on my own', glyph: '✓', earned: sessions.some((s) => s.reading_level === 'Independent') },
-    { key: 'streak7', name: '7-day streak', glyph: '7', earned: bestStreak >= 7 },
-  ]
-}
-
-/**
  * TODO(weekly level): placeholder — uses the level of the week's most recent
  * reading until the team picks a measure (e.g. average word-recognition score).
  * @returns {'Independent'|'Instructional'|'Frustration'|null}
@@ -127,7 +104,7 @@ export function hasComprehension(sessions) {
  * send or save them yet — so the card can show "Coming soon".
  * @returns {{ word: string, said?: string, times: number }[] | null}
  */
-export function trickyWords(sessions, limit = 5) {
+export function trickyWords(sessions, limit = 3) {
   if (!sessions.some((s) => s.miscue_details)) return null
   const byWord = new Map()
   for (const s of sessions) {
@@ -147,6 +124,14 @@ export function trickyWords(sessions, limit = 5) {
 }
 
 /**
+ * The story grades the learner has read, lowest first (e.g. [3, 4]). Empty
+ * until sessions carry `passage_grade` — TODO(passage grade): not saved yet.
+ */
+export function storyGrades(sessions) {
+  return [...new Set(sessions.map((s) => s.passage_grade).filter((g) => g != null))].sort((a, b) => a - b)
+}
+
+/**
  * The reading habit seen most often in the last few readings (a behaviour-flag
  * key, e.g. 'monotone_reading'), or null when none was seen — the card then praises.
  */
@@ -162,10 +147,4 @@ export function habitToPractice(sessions, recent = 3) {
     }
   }
   return pick
-}
-
-/** Sessions read since Monday. */
-export function readThisWeek(sessions, now = new Date()) {
-  const start = startOfWeek(now)
-  return sessions.filter((s) => new Date(s.session_timestamp) >= start).length
 }

@@ -4,7 +4,8 @@
  *
  *   /dashboard?sample           → full history over the last four weeks, with
  *                                 the not-yet-saved fields (comprehension_level,
- *                                 miscue_details, passage_title) filled in
+ *                                 miscue_details, passage_title, passage_grade)
+ *                                 filled in
  *   /dashboard?sample=basic     → same readings without those fields, so the
  *                                 "Coming soon" boxes show
  *   /dashboard?sample=empty     → first-time learner (no readings)
@@ -32,6 +33,13 @@ const BASE = {
 
 // [days ago, title, level, wpm, word recognition %, comprehension, extra fields]
 const READINGS = [
+  // Older than the dashboard's four-week window, so they only show on /history
+  // (and in the totals) — gives the grade filter 12 stories to sort.
+  [52, 'The Little Red Hen', 'Frustration', 45, 85, 1, { word_by_word_reading: true, miscue_details: {} }],
+  [47, 'A Day at the Beach', 'Frustration', 48, 86, 1, { loss_of_place: true, miscue_details: {} }],
+  [42, 'My Pet Cat', 'Instructional', 50, 91, 2, { miscue_details: {} }],
+  [37, 'The Jeepney Ride', 'Frustration', 49, 87, 1, { monotone_reading: true, miscue_details: {} }],
+  [32, 'Sampaguita for Nanay', 'Instructional', 52, 92, 2, { miscue_details: {} }],
   [24, 'Market Day', 'Frustration', 54, 88, 1, { word_by_word_reading: true,
     miscue_details: { mispronunciation: [{ said: 'fir', expected: 'fire' }], substitution: [{ said: 'horse', expected: 'house' }] } }],
   [22, 'The Lost Kite', 'Frustration', 61, 90, 1, { monotone_reading: true,
@@ -68,7 +76,9 @@ function buildSessions(withNewFields) {
       correct: pct,
       dev_sample: true,
     }
-    return withNewFields ? { ...row, passage_title: title, comprehension_level: comprehension, miscue_details } : row
+    // The seven oldest stories are Grade 3, the rest Grade 4.
+    const passage_grade = i < 7 ? 3 : 4
+    return withNewFields ? { ...row, passage_title: title, passage_grade, comprehension_level: comprehension, miscue_details } : row
   })
 }
 

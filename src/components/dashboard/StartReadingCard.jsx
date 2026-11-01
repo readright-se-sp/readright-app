@@ -10,7 +10,7 @@ export function StartReadingCard({ grade, suggestedGrade, onGradeChange, onStart
   const [picking, setPicking] = useState(false)
 
   return (
-    <section className="flex items-stretch gap-3 rounded-3xl border-2 border-card-border bg-card p-4 shadow-card">
+    <section className="flex items-stretch gap-3">
       <button
         type="button"
         onClick={() => setPicking(true)}

@@ -13,24 +13,27 @@
  * ── Sections (top → bottom) ──────────────────────────────────────────────
  *
  *  1. Header + greeting           logo, ProfileMenu (Sign out), "Hi, Ana!"
- *  2. Start Reading               → StartReadingCard (+ StoryLevelPicker)
- *  3. Streak + weekly goal        → StreakCard          TODO(weekly goal)
- *  4. Stars + badges              → StarsCard           TODO(stars): rule is a placeholder
- *  5. Stories read                → StoriesReadCard
- *  6. My reading level (4 weeks)  → WeeklyFacesCard     TODO(weekly level): placeholder measure
- *  7. How fast Lumi flies         → SpeedWeeksCard (words per minute vs goal)
- *  8. Did you understand?         → WeeklyFacesCard     "Coming soon" until sessions have
+ *  2. Start Reading               → StartReadingCard (+ StoryLevelPicker), sticky at
+ *                                   the bottom of the screen (last in the DOM)
+ *  3. Streak                      → StreakCard
+ *  4. Stories read                → StoriesReadCard
+ *  5. My reading level (4 weeks)  → WeeklyFacesCard     TODO(weekly level): placeholder measure
+ *  6. How fast Lumi flies         → SpeedWeeksCard (words per minute vs goal)
+ *  7. Did you understand?         → WeeklyFacesCard     "Coming soon" until sessions have
  *                                   comprehension_level (TODO(comprehension score))
- *  9. My tricky words             → TrickyWordsCard     "Coming soon" until sessions have
+ *  8. My tricky words             → TrickyWordsCard     "Coming soon" until sessions have
  *                                   miscue_details (TODO(miscue details))
- * 10. One habit to practice       → HabitCard (behaviour flags of the last 3 readings)
- * 11. Past readings               → PastReadings        TODO(passage title)
+ *  9. One habit to practice       → HabitCard (behaviour flags of the last 3 readings)
+ * 10. Past readings (preview)     → PastReadings        "See all my readings" → /history
+ *                                   TODO(passage title), TODO(passage grade)
+ *
+ *  Stars + badges were removed until the backend tracks achievements.
  *
  * Aggregation lives in lib/dashboardStats.js.
  *
  * ── States ───────────────────────────────────────────────────────────────
  *
- *  Start Reading is always shown, so a reading is one tap away in every state.
+ *  Start Reading is always shown (sticky), so a reading is one tap away in every state.
  *  Loading  DashboardLoading while useSessionHistory fetches.
  *  Empty    DashboardEmpty when sessions.length === 0 after load.
  *  Error    DashboardError — "Try again" re-runs the load (retry).
@@ -57,13 +60,10 @@ import { useSessionHistory } from '../hooks/useSessionHistory'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { sampleDashboard } from '../data/sampleDashboard'
 import {
-  badges,
   habitToPractice,
   hasComprehension,
   lastFourWeeks,
-  readThisWeek,
   readingStreaks,
-  totalStars,
   trickyWords,
   weekComprehension,
   weekReadingLevel,
@@ -73,7 +73,6 @@ import { LogoMark } from '../components/icons'
 import ProfileMenu from '../components/layout/ProfileMenu'
 import { StartReadingCard } from '../components/dashboard/StartReadingCard'
 import { StreakCard } from '../components/dashboard/StreakCard'
-import { StarsCard } from '../components/dashboard/StarsCard'
 import { StoriesReadCard } from '../components/dashboard/StoriesReadCard'
 import { WeeklyFacesCard } from '../components/dashboard/WeeklyFacesCard'
 import { SpeedWeeksCard } from '../components/dashboard/SpeedWeeksCard'
@@ -137,33 +136,37 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <StartReadingCard
-          grade={passageGrade}
-          suggestedGrade={suggestedGrade}
-          onGradeChange={setPickedGrade}
-          onStart={startReading}
-        />
-
         {error && <DashboardError onRetry={history.retry} />}
         {!error && loading && <DashboardLoading />}
         {isEmpty && <DashboardEmpty />}
-        {ready && sessions.length > 0 && <Progress sessions={sessions} />}
+        {ready && sessions.length > 0 && <Progress sessions={sessions} historyPath={`/history${sample ? search : ''}`} />}
+
+        {/* Sticky at the bottom of the screen in every state, so a reading is
+            always one tap away. Last in the column because `sticky bottom-0`
+            only pins while its natural spot is below the fold; it bleeds past
+            the column's px-4/pb-8 so scrolled content doesn't show beside it. */}
+        <div className="sticky bottom-0 z-20 -mx-4 -mb-8 bg-[#fff9f6] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-6px_12px_-6px_rgba(120,60,50,0.18)]">
+          <StartReadingCard
+            grade={passageGrade}
+            suggestedGrade={suggestedGrade}
+            onGradeChange={setPickedGrade}
+            onStart={startReading}
+          />
+        </div>
       </div>
     </div>
   )
 }
 
 /** Every progress section, for a learner with at least one reading. */
-function Progress({ sessions }) {
+function Progress({ sessions, historyPath }) {
   const weeks = lastFourWeeks(sessions)
   const streak = readingStreaks(sessions)
-  const thisWeek = readThisWeek(sessions)
 
   return (
     <>
-      <StreakCard streak={streak.current} thisWeek={thisWeek} />
-      <StarsCard stars={totalStars(sessions)} badges={badges(sessions, streak.best)} />
-      <StoriesReadCard total={sessions.length} thisWeek={thisWeek} />
+      <StreakCard streak={streak.current} />
+      <StoriesReadCard total={sessions.length} />
       <WeeklyFacesCard
         title="My reading level"
         weeks={weeks.map((w) => ({ label: w.label, face: LEVEL_FACES[weekReadingLevel(w.sessions)] ?? null }))}
@@ -179,7 +182,7 @@ function Progress({ sessions }) {
       </WeeklyFacesCard>
       <TrickyWordsCard words={trickyWords(sessions)} />
       <HabitCard habitKey={habitToPractice(sessions)} />
-      <PastReadings sessions={sessions} />
+      <PastReadings sessions={sessions} historyPath={historyPath} />
     </>
   )
 }
