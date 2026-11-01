@@ -17,6 +17,7 @@
  *                       sorted by session_timestamp ASC.
  *   loading   {boolean} True while the initial query is in-flight.
  *   error     {object|null} Supabase PostgrestError if the query fails.
+ *   retry     {Function} Re-runs the query (the dashboard's "Try again").
  *
  * Session row shape — 19 fields matching AssessmentResultJSON in api.js:
  *   Core identifiers  : learner_id, passage_id, session_timestamp
@@ -38,7 +39,8 @@
  *   Blocks     : REA-33 · RR-049 (Dashboard Miscue + Behavioral History Charts)
  *                That ticket will consume this same hook to power the Miscue
  *                Patterns and Behavioral History sections. Do NOT alter the
- *                return shape { sessions, loading, error } or the query order.
+ *                return shape { sessions, loading, error } (retry was added
+ *                alongside) or the query order.
  *
  * Security note
  * -------------
@@ -47,26 +49,39 @@
  *   mount against the restored session; it returns an empty array only if the
  *   session is genuinely absent or expired.
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 export function useSessionHistory() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
+    let cancelled = false
     async function fetchSessions() {
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
         .order('session_timestamp', { ascending: true })
+      if (cancelled) return
       if (error) setError(error)
       else setSessions(data)
       setLoading(false)
     }
     fetchSessions()
+    return () => {
+      cancelled = true
+    }
+  }, [attempt])
+
+  // "Try again" on the dashboard error card: re-runs the query in place.
+  const retry = useCallback(() => {
+    setError(null)
+    setLoading(true)
+    setAttempt((n) => n + 1)
   }, [])
 
-  return { sessions, loading, error }
+  return { sessions, loading, error, retry }
 }

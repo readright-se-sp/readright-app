@@ -77,6 +77,13 @@
     40%           { opacity: 1; transform: translateY(-3px); }
   }
 
+  /* Dashboard tricky words: sound bars on the "Playing" button */
+  --animate-eq: eq 0.8s ease-in-out infinite;
+  @keyframes eq {
+    0%, 100% { transform: scaleY(0.35); }
+    50%      { transform: scaleY(1); }
+  }
+
   --shadow-card: 0px 4px 0px #e6dcc3;
 
   --font-display: 'Nunito Sans', sans-serif;
