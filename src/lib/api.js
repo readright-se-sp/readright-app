@@ -16,6 +16,8 @@
  * in via the `signal` option (RR-050 · REA-34).
  */
 
+import { fakeAnalyze, getFakeAnalysis } from '../utils/devPreview'
+
 /** Error that carries the FastAPI failure `code` (e.g. 'DB_WRITE_FAILED') for callers. */
 export class ApiError extends Error {
   constructor(code, message) {
@@ -34,6 +36,13 @@ export class ApiError extends Error {
  * @throws {DOMException} 'AbortError' when the signal aborts (timeout/unmount)
  */
 export async function submitRecording(file, passageId, { signal } = {}) {
+  // Dev-only: ?fakeAnalysis skips the backend (utils/devPreview.js). Production
+  // builds drop this branch entirely.
+  if (import.meta.env.DEV) {
+    const fake = getFakeAnalysis()
+    if (fake) return fakeAnalyze(fake, signal)
+  }
+
   const formData = new FormData()
   formData.append('file', file)
   formData.append('passage_id', passageId)

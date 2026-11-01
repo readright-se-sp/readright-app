@@ -7,117 +7,154 @@
  * Priority: High  |  Estimate: 3 pts  |  Effort: M (4–5 hrs)
  * Created : 2026-05-17 by Reev Santillan
  *
- * Renders the complete Phil-IRI assessment output after the recording flow
- * completes. Matches Figma design "Your Results (English)".
+ * Renders the Phil-IRI assessment output after the reading + comprehension
+ * quiz. Matches the "Results Page" redesign (Lumi, kid-friendly sections).
  *
  * Data source: React Router location.state — SessionScreen navigates with
- * { state: { result, passage, isFirstSession } } (see ARCHITECTURE.md). Falls
- * back to calling submitRecording() directly for direct-navigation dev testing.
+ * { state: { result, passage, isFirstSession, quizAnswers } } (see
+ * ARCHITECTURE.md). Opened directly with no result, it redirects to the
+ * dashboard; in `npm run dev` it shows a sample result instead (see below).
  *
  * On mount it also persists the session to Supabase with retry (RR-041, REA-26)
- * via the useSessionStorage hook (which wraps saveSessionRecord's 3x backoff).
- * The save never blocks rendering: if all retries fail, results still show and a
- * non-blocking save-failure banner appears (NFR-R1).
+ * via the useSessionStorage hook. The save never blocks rendering: if all
+ * retries fail, results still show with a non-blocking banner (NFR-R1).
  *
  * Sections (in order):
- *   1. Reading Level badge card        → components/results/ReadingLevelCard
- *   2. WPM + Word Recognition stats     → components/results/StatCard ×2
- *   3. Miscue Breakdown                 → components/results/MiscueBreakdown
- *   4. Reading Habits                   → components/results/ReadingHabits
- *   5. Navigation buttons → /dashboard and /session
+ *   1. "You did it, <name>!" hero
+ *   2. Did you understand the story?   → ComprehensionCard (only when the result
+ *      has comprehension_level — TODO(comprehension score): backend to add)
+ *   3. Reading Aloud Score              → ReadingScoreCard (word recognition + level)
+ *   4. How fast did Lumi fly?           → SpeedCard (words per minute vs goal)
+ *   5. Word Detective                   → WordDetective (+ WordReviewSheet when the
+ *      result has miscue_details — TODO(miscue details): backend to add)
+ *   6. How I Read                       → HowIRead (behaviour flags, NFR-U3 framing)
+ *   7. See My Stars → /dashboard · Read Another Story → /session
  *
  * Blocks  : REA-32 · RR-048 (First-Time User Onboarding)
  * Blocked by: REA-8 · RR-004 (FastAPI) — api.js now posts to the real /analyze
  *
- * SRS NFR-U3: Behavioral section uses habit-improvement framing (see ReadingHabits).
  * SRS NFR-P2: Must render within 3 seconds of receiving data.
  */
-import { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { submitRecording } from '../lib/api'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { sampleResults } from '../data/sampleResults'
+import { isDevSample } from '../utils/devPreview'
 import { useSessionStorage } from '../hooks/useSessionStorage'
-import { wrRange } from '../lib/philIri'
-import PageShell from '../components/layout/PageShell'
-import Button from '../components/ui/Button'
-import ReadingLevelCard from '../components/results/ReadingLevelCard'
-import StatCard from '../components/results/StatCard'
-import MiscueBreakdown from '../components/results/MiscueBreakdown'
-import ReadingHabits from '../components/results/ReadingHabits'
-import ResultsSkeleton from '../components/results/ResultsSkeleton'
-
-// Dev-only: a real `passages` row UUID, used only on direct navigation (no route
-// state). The real flow gets passage.id from SessionScreen's route state instead.
-const DEV_PASSAGE_ID = 'ccf4b227-b8c9-497f-a20b-b91072e3cfb5'
+import { useCurrentUser } from '../hooks/useCurrentUser'
+import { LogoMark } from '../components/icons'
+import { ComprehensionCard } from '../components/results/ComprehensionCard'
+import { ReadingScoreCard } from '../components/results/ReadingScoreCard'
+import { SpeedCard } from '../components/results/SpeedCard'
+import { WordDetective } from '../components/results/WordDetective'
+import { HowIRead } from '../components/results/HowIRead'
 
 export default function SessionResultsPage() {
-  const { state } = useLocation()
+  const { state, search } = useLocation()
   const navigate = useNavigate()
-  const sessionResult = state?.result ?? state ?? null
-  const [result, setResult] = useState(sessionResult)
-  const [passageId, setPassageId] = useState(state?.passage?.id ?? null)
-  const [loading, setLoading] = useState(!sessionResult)
+  const { user } = useCurrentUser()
+  const sessionResult = state?.result ?? null
 
-  // Direct-navigation / dev fallback: no result in route state → call the API
-  // directly so the page can be exercised on its own.
-  useEffect(() => {
-    if (sessionResult) return
-    submitRecording(null, DEV_PASSAGE_ID).then((r) => {
-      setResult(r)
-      setPassageId(DEV_PASSAGE_ID)
-      setLoading(false)
-    })
-  }, [sessionResult])
+  // Dev-only preview (npm run dev): opening /results directly shows a sample
+  // result from data/sampleResults.js — ?sample=instructional (default),
+  // independent, frustration or allMiscues; add &first for the first-time note.
+  // Production builds never use samples.
+  const params = new URLSearchParams(search)
+  const sampleResult =
+    !sessionResult && import.meta.env.DEV
+      ? { ...(sampleResults[params.get('sample')] ?? sampleResults.instructional), dev_sample: true }
+      : null
+  const result = sessionResult ?? sampleResult
+  const isFirstSession = state?.isFirstSession || (!!sampleResult && params.has('first'))
 
-  // Persist the session once results are available (RR-041 · REA-26). The hook
-  // owns the StrictMode-safe once-guard; the save never blocks rendering (NFR-R1).
+  // Persist the session once (RR-041 · REA-26). The hook owns the StrictMode-safe
+  // once-guard; the save never blocks rendering (NFR-R1). Fake/sample results
+  // (dev only) get no passage id, so they are never saved.
+  const passageId = isDevSample(result) ? null : (state?.passage?.id ?? null)
   const { saveStatus } = useSessionStorage(result, passageId)
 
+  // Results only exist right after a reading — opened directly (bookmark,
+  // refresh), there's nothing to show, so go back to the dashboard.
+  if (!result) return <Navigate to="/dashboard" replace />
+
+  const firstName = user?.user_metadata?.display_name?.trim().split(/\s+/)[0]
+  const storyTitle = state?.passage?.title
+
   return (
-    <PageShell onExit={() => navigate('/dashboard')}>
+    <div className="min-h-dvh bg-[#f3e4e0] font-display text-ink sm:py-6">
+      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-3.5 bg-[#fff9f6] px-4.5 pb-7 sm:rounded-[32px] sm:border-2 sm:border-[#e3c3bb]">
+        <header className="flex items-center justify-between pb-1.5 pt-5">
+          <div className="flex items-center gap-2">
+            <LogoMark size={34} />
+            <span className="text-[21px] font-black text-brand">ReadRight</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            aria-label="Close and go back to my dashboard"
+            className="flex size-11 items-center justify-center rounded-full border-[1.5px] border-[#ebcfc8] bg-white text-[22px] font-extrabold text-ink-soft"
+          >
+            ×
+          </button>
+        </header>
 
-      {!loading && result && state?.isFirstSession && (
-        <div style={{ background: '#FEF9F0', border: '1px solid #F0DFC0', borderRadius: 12, padding: '14px 16px', marginBottom: 8, fontFamily: 'system-ui, sans-serif' }}>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#1A1008', margin: '0 0 4px' }}>Here are your results! 🎉</p>
-          <p style={{ fontSize: 13, color: '#8B7355', margin: 0, lineHeight: 1.55 }}>These show how you read today. Check your progress dashboard to see how you improve over time.</p>
+        <div className="flex flex-col items-center pb-1 pt-1.5 text-center">
+          <span className="flex size-32 items-center justify-center rounded-full bg-coral-soft ring-4 ring-[#f6dcd8]">
+            <img src="/mascot-reading.svg" alt="" className="w-[100px]" />
+          </span>
+          <h1 className="mt-1.5 text-[28px] font-black leading-[1.15]">
+            {firstName ? `You did it, ${firstName}!` : 'You did it!'}
+          </h1>
+          <p className="mt-1 text-base font-semibold text-ink-soft">
+            {storyTitle ? (
+              <>Here’s how you read <b className="text-brand">{storyTitle}</b></>
+            ) : (
+              'Here’s how you read today'
+            )}
+          </p>
         </div>
-      )}
 
-      {loading && <ResultsSkeleton />}
+        {isFirstSession && <FirstResultsNote />}
+        {saveStatus === 'failed' && <SaveFailureBanner />}
 
-      {!loading && result && (
-        <>
-          {saveStatus === 'failed' && <SaveFailureBanner />}
+        <ComprehensionCard level={result.comprehension_level} />
+        <ReadingScoreCard score={result.word_recognition_pct} readingLevel={result.reading_level} />
+        <SpeedCard wpm={result.wpm} />
+        <div className="mt-2">
+          <WordDetective result={result} />
+        </div>
+        <div className="mt-2">
+          <HowIRead result={result} />
+        </div>
 
-          <ReadingLevelCard readingLevel={result.reading_level} />
+        <div className="mt-2 flex flex-col gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="min-h-[58px] rounded-[18px] bg-brand text-lg font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-[0_1px_0_#7a1f1b]"
+          >
+            See My Stars
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/session')}
+            className="min-h-[58px] rounded-[18px] border-2 border-brand bg-white text-lg font-black text-brand"
+          >
+            Read Another Story
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
-          <div className="flex gap-4">
-            <StatCard
-              value={Math.round(result.wpm)}
-              label="WORDS PER MINUTE"
-              sub="Grade 4 target: 80 WPM"
-              valueColor="var(--color-brand)"
-            />
-            <StatCard
-              value={`${Math.round(result.word_recognition_pct)}%`}
-              label="WORD RECOGNITION"
-              sub={wrRange(result.word_recognition_pct).label}
-              valueColor="var(--color-goal)"
-              subColor={wrRange(result.word_recognition_pct).color}
-            />
-          </div>
-
-          <MiscueBreakdown result={result} />
-          <ReadingHabits result={result} />
-
-          <div className="flex flex-col gap-3">
-            <Button onClick={() => navigate('/dashboard')}>See My Progress</Button>
-            <Button variant="secondary" onClick={() => navigate('/session')}>
-              Try Another Passage
-            </Button>
-          </div>
-        </>
-      )}
-    </PageShell>
+/** First-ever results: a short note explaining what this page is (RR-048). */
+function FirstResultsNote() {
+  return (
+    <div className="rounded-2xl border-[1.5px] border-[#f0dfc0] bg-[#fef9f0] px-4 py-3.5">
+      <p className="text-base font-black text-ink">Here are your results! 🎉</p>
+      <p className="mt-0.5 text-[15px] font-semibold leading-[1.45] text-ink-soft">
+        These show how you read today. Check your progress dashboard to see how you improve over time.
+      </p>
+    </div>
   )
 }
 
@@ -128,17 +165,14 @@ export default function SessionResultsPage() {
  */
 function SaveFailureBanner() {
   return (
-    <div
-      role="alert"
-      className="flex items-start gap-3 rounded-[12px] border border-amber bg-amber/10 px-4 py-3"
-    >
+    <div role="alert" className="flex items-start gap-3 rounded-2xl border border-amber bg-amber/10 px-4 py-3">
       <span
         className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-amber text-[12px] font-bold text-white"
         aria-hidden="true"
       >
         !
       </span>
-      <p className="text-[14px] leading-[20px] text-ink">
+      <p className="text-[15px] leading-[21px] text-ink">
         We could not save these results to your progress. Your scores below are still
         correct. Please check your internet connection and try another reading later.
       </p>
