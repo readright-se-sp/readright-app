@@ -1,7 +1,10 @@
 /**
- * sampleResults.js — dev-only AssessmentResultJSON fixtures (npm run dev only).
+ * sampleResults.js — static AssessmentResultJSON samples.
  *
- * Used to review the UI without the FastAPI backend:
+ * TODO(backend): every finished reading shows "instructional" for now, in all
+ * builds (USE_SAMPLE_RESULTS in lib/api.js).
+ *
+ * Also used to review the UI without a reading (npm run dev only):
  *   /results                       → instructional (direct navigation, dev only)
  *   /results?sample=independent    → independent
  *   /results?sample=frustration    → frustration
