@@ -39,6 +39,7 @@
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { sampleResults } from '../data/sampleResults'
 import { isDevSample } from '../utils/devPreview'
+import { isV1Enabled } from '../lib/api'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { LogoMark } from '../components/icons'
@@ -68,8 +69,10 @@ export default function SessionResultsPage() {
 
   // Persist the session once (RR-041 · REA-26). The hook owns the StrictMode-safe
   // once-guard; the save never blocks rendering (NFR-R1). Fake/sample results
-  // (dev only) get no passage id, so they are never saved.
-  const passageId = isDevSample(result) ? null : (state?.passage?.id ?? null)
+  // (dev only) get no passage id, so they are never saved. On the v1 API the
+  // backend saves the session, so this save and its banner are removed with the
+  // old flow.
+  const passageId = isDevSample(result) || isV1Enabled() ? null : (state?.passage?.id ?? null)
   const { saveStatus } = useSessionStorage(result, passageId)
 
   // Results only exist right after a reading — opened directly (bookmark,

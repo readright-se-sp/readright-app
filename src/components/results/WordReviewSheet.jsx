@@ -74,7 +74,7 @@ export function WordReviewSheet({ type, words, onClose }) {
         {/* What the learner said */}
         <div className={`mt-3 flex flex-col gap-2.5 rounded-[22px] border-2 bg-white p-4 ${type.border}`}>
           <span className={`text-sm font-black uppercase tracking-[0.05em] ${type.ink}`}>{type.said}</span>
-          <span className="text-[30px] font-black leading-[1.1]">“{word.said}”</span>
+          <span className="text-[30px] font-black leading-[1.1]">{word.said ? `“${word.said}”` : '(skipped)'}</span>
           {word.said_audio_url ? (
             <PlayButton
               className={type.dot}

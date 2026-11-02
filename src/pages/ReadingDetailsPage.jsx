@@ -20,8 +20,9 @@
  *
  * ── Data ─────────────────────────────────────────────────────────────────
  *
- *  Source : useReadingResult(sessionId) → static samples + placeholder result
- *           (data/sampleReadingResults.js). TODO(backend): fetch by id.
+ *  Source : useReadingResult(sessionId) → GET /v1/me/sessions/{id}/result, or
+ *           static samples + placeholder result (data/sampleReadingResults.js)
+ *           while VITE_USE_V1_API is off.
  */
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { findReading, useReadingResult } from '../hooks/useReadingResult'

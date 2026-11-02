@@ -1,27 +1,52 @@
+import { useCallback, useEffect, useState } from 'react'
+import { getQuestions } from '../lib/api'
+import { sampleQuestions } from '../data/sampleQuestions'
+
 /**
  * useComprehensionQuiz — the comprehension questions shown after a reading.
  *
- * TODO(quiz questions): PLACEHOLDER. Returns the same sample questions for every
- * passage. Once the backend serves Phil-IRI comprehension questions,
- * fetch them here for `passage.id` (pure fetch in lib/api.js, state in this
- * hook) and keep this return shape.
+ * With a `sessionId` (v1 API), loads the questions for the session's passage
+ * (pure fetch in lib/api.js, state in this hook — same split as usePassage).
+ * Without one (static samples), returns the same sample questions for every passage.
  *
  * Question shape: { id, question, options: string[] } — 3 or 4 options. The
  * learner may also answer "I don't know" (recorded as choice 'idk').
  *
- * @param {object|null} passage — the passage that was just read
- * @returns {{ questions: object[], loading: boolean, error: Error|null }}
+ * @param {string|null} sessionId
+ * @returns {{ questions: object[], loading: boolean, error: Error|null, retry: () => void }}
  */
-// eslint-disable-next-line no-unused-vars -- passage is used once questions are fetched per passage
-export function useComprehensionQuiz(passage) {
-  return { questions: PLACEHOLDER_QUESTIONS, loading: false, error: null }
-}
+export function useComprehensionQuiz(sessionId) {
+  const [questions, setQuestions] = useState(sessionId ? [] : sampleQuestions)
+  const [loading, setLoading] = useState(!!sessionId)
+  const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
 
-const PLACEHOLDER_QUESTIONS = [
-  { id: 'placeholder-1', question: 'Who is the story about?', options: ['A girl named Lina', 'A boy named Sam', 'A farmer named Kiko'] },
-  { id: 'placeholder-2', question: 'What color was Lina’s kite?', options: ['Blue and white', 'Red and yellow', 'Green and black'] },
-  { id: 'placeholder-3', question: 'Why did Lina run up the hill?', options: ['To fly her new kite', 'To look for her dog', 'To pick ripe mangoes'] },
-  { id: 'placeholder-4', question: 'Who ran after Lina?', options: ['Her little brother', 'Her dog, Bantay', 'Her best friend'] },
-  { id: 'placeholder-5', question: 'Where did the kite fly?', options: ['Into the river', 'Above the mango trees', 'Over the school'] },
-  { id: 'placeholder-6', question: 'How did Lina feel at the end of the story?', options: ['Sad', 'Scared', 'Happy'] },
-]
+  useEffect(() => {
+    if (!sessionId) return
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const loaded = await getQuestions(sessionId)
+        if (cancelled) return
+        if (loaded.length === 0) setError(new Error('No questions available'))
+        else setQuestions(loaded)
+      } catch (err) {
+        if (!cancelled) setError(err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [sessionId, attempt])
+
+  const retry = useCallback(() => setAttempt((n) => n + 1), [])
+
+  return { questions, loading, error, retry }
+}

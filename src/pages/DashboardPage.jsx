@@ -43,7 +43,8 @@
  *
  * ── Data ─────────────────────────────────────────────────────────────────
  *
- *  Source : useSessionHistory() → static samples for now (data/sampleData.js).
+ *  Source : useSessionHistory() → GET /v1/dashboard, or static samples
+ *           (data/sampleData.js) while VITE_USE_V1_API is off.
  *  Domain : reading-level mapping lives in lib/philIri.js.
  *
  * ── Dependencies ──────────────────────────────────────────────────────────
@@ -105,10 +106,8 @@ export default function DashboardPage() {
 
   // Entry point into a new reading: routes through the permission explainer
   // (/pre-session) → GO1 gate (/quality-check) → /session.
-  // TODO(passage grade): UI only — passageGrade is passed in route state but
-  // nothing reads it yet. To make it functional, forward it /pre-session →
-  // /quality-check → /session and filter usePassage by grade
-  // (needs a grade column on the `passages` table).
+  // passageGrade is forwarded through each step's route state to usePassage. Only
+  // the v1 API uses it; the static samples ignore it.
   const startReading = () => navigate('/pre-session', { state: { passageGrade } })
 
   const firstName = user?.user_metadata?.display_name?.trim().split(/\s+/)[0]
