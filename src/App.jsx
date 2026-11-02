@@ -9,6 +9,7 @@ import HistoryPage        from './pages/HistoryPage.jsx'
 import ReadingDetailsPage from './pages/ReadingDetailsPage.jsx'
 import QualityCheckScreen from './pages/QualityCheckScreen.jsx'
 import PrePermissionScreen from './pages/PrePermissionScreen.jsx'
+import { useScrollToTopOnNavigate } from './hooks/useScrollToTopOnNavigate.js'
 
 /**
  * Route map (RR-003 skeleton):
@@ -25,6 +26,9 @@ import PrePermissionScreen from './pages/PrePermissionScreen.jsx'
  * (RR-010), which wraps every learner-only route below.
  */
 export default function App() {
+  // Each new page opens at the top, not at the previous page's scroll position.
+  useScrollToTopOnNavigate()
+
   return (
     <Routes>
       <Route path="/login"     element={<LoginPage />} />

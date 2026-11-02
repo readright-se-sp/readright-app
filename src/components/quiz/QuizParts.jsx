@@ -1,56 +1,47 @@
-import ExitButton from '../ui/ExitButton'
+import { StickerExitButton } from '../ui/ExitButton'
+import { StickerPage } from '../ui/StickerPage'
+import { STICKER_PRIMARY } from '../ui/stickerStyles'
 
-// Shared building blocks for the comprehension quiz screens.
+// Shared building blocks for the comprehension quiz screens, in the reading
+// flow's sticker style: peach page, brown-outlined cards with a ledge.
 
 /**
- * Full-height page in the quiz's blush background, mobile-first column.
+ * Full-height peach page, mobile-first column.
  * `onExit` (optional) adds the ✕ in the top-left corner.
  */
 export function QuizPage({ children, onExit, className = '' }) {
   return (
-    <div className="min-h-dvh bg-[#f4e8e6] font-display text-ink">
-      <div className={`mx-auto flex min-h-dvh w-full max-w-[480px] flex-col px-5 pb-7 pt-6 ${className}`}>
-        {onExit && (
-          <div className="-ml-1 -mt-2 mb-2 flex">
-            <QuizExitButton onClick={onExit} />
-          </div>
-        )}
-        {children}
-      </div>
-    </div>
+    <StickerPage className={`pt-[max(1rem,env(safe-area-inset-top))] ${className}`}>
+      {onExit && (
+        <div className="mb-3 flex">
+          <QuizExitButton onClick={onExit} />
+        </div>
+      )}
+      {children}
+    </StickerPage>
   )
 }
 
 /** The quiz's ✕ — asks before leaving (SessionScreen shows the dialog). */
 export function QuizExitButton({ onClick }) {
-  return (
-    <ExitButton
-      onClick={onClick}
-      label="Stop and go back to my dashboard"
-      className="flex-none bg-white/70 text-ink-soft"
-    />
-  )
+  return <StickerExitButton onClick={onClick} label="Stop and go back to my dashboard" />
 }
 
-/** White rounded card used by the intro and done screens. */
+/** Cream sticker card used by the intro and done screens. */
 export function QuizCard({ children, className = '' }) {
   return (
     <div
-      className={`flex flex-1 flex-col rounded-[24px] border-[1.5px] border-card-border bg-[#fefcfc] shadow-[0_10px_30px_rgba(120,50,40,0.08)] ${className}`}
+      className={`flex flex-1 flex-col rounded-3xl border-[3px] border-level-tile-edge bg-sticker shadow-level-tile ${className}`}
     >
       {children}
     </div>
   )
 }
 
-/** Big brand "pill" button with the pressable bottom edge. */
+/** Big red sticker button that presses down. Pass its height and text size. */
 export function QuizPrimaryButton({ children, onClick, className = '' }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-full bg-brand text-white shadow-[0_5px_0_#871f1a] active:translate-y-1 active:shadow-[0_1px_0_#871f1a] ${className}`}
-    >
+    <button type="button" onClick={onClick} className={`${STICKER_PRIMARY} gap-2.5 px-4 ${className}`}>
       {children}
     </button>
   )

@@ -35,7 +35,8 @@ import { LeaveSessionDialog } from '../components/session/LeaveSessionDialog'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { PermissionExplainer } from '../components/quality/PermissionExplainer'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
-import ExitButton from '../components/ui/ExitButton'
+import { StickerExitButton } from '../components/ui/ExitButton'
+import { StickerPage } from '../components/ui/StickerPage'
 import { LogoMark } from '../components/icons'
 
 const MAX_RECORDING_MS = 5 * 60 * 1000
@@ -268,165 +269,169 @@ export default function SessionScreen() {
 
   // --- Granted: "Read out loud" ----------------------------------------------
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-[#f3e6e3] px-4 py-6 font-display">
-      <div className="flex w-full max-w-[380px] flex-col rounded-[28px] border-2 border-card-border bg-[#fffdfc] px-4 pt-4 pb-5 shadow-[0px_18px_40px_0px_rgba(120,60,50,0.12)]">
-        {/* Header: exit · logo · spacer */}
-        <div className="flex items-center justify-between">
-          <ExitButton onClick={requestExit} className="bg-divider text-ink-soft" />
-          <div className="flex items-center gap-1.5">
-            <img src="/mascot-reading.svg" alt="" className="size-[34px] object-contain" />
-            <span className="text-[18px] font-black text-brand">ReadRight</span>
-          </div>
-          <div className="w-11" aria-hidden="true" />
-        </div>
+    <StickerPage>
+      <SessionHeader onExit={requestExit} />
 
-        {/* Camera: one <video> throughout (it also feeds the live GO1 monitor),
-            restyled from a large framing preview into a small corner bubble while
-            recording so the learner's eyes stay on the passage. */}
-        <div className={`mt-3 flex items-center gap-3 ${isRecording ? 'min-h-[104px] justify-between' : ''}`}>
-          {isRecording && (
-            <RecordingStatus elapsed={formatElapsed(elapsed)} problem={recordingProblem} />
-          )}
+      {/* Camera: one <video> throughout (it also feeds the live GO1 monitor),
+          restyled from a large framing preview into a small corner bubble while
+          recording so the learner's eyes stay on the passage. */}
+      <div className={`mt-4 flex items-center gap-3 ${isRecording ? 'min-h-[104px] justify-between' : ''}`}>
+        {isRecording && (
+          <RecordingStatus elapsed={formatElapsed(elapsed)} problem={recordingProblem} />
+        )}
+        <div
+          className={`relative flex-none transition-all duration-300 ${
+            isRecording ? (recordingProblem ? 'size-[104px]' : 'size-[84px]') : 'h-[210px] w-full'
+          }`}
+        >
           <div
-            className={`relative flex-none transition-all duration-300 ${
-              isRecording ? (recordingProblem ? 'size-[104px]' : 'size-[84px]') : 'h-[210px] w-full'
+            className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-[#4a3530] to-[#7a625b] shadow-level-tile ${
+              isRecording
+                ? `rounded-full border-4 ${recordingProblem ? 'border-amber animate-attention-pulse' : 'border-mint'}`
+                : 'rounded-3xl border-[3px] border-level-tile-edge'
             }`}
           >
-            <div
-              className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-[#4a3530] to-[#7a625b] ${
-                isRecording
-                  ? `rounded-full border-4 ${recordingProblem ? 'border-amber animate-attention-pulse' : 'border-mint'}`
-                  : 'rounded-[24px]'
-              }`}
-            >
-              <CameraPreview
-                stream={stream}
-                onVideoNode={setVideoNode}
-                className="absolute inset-0 h-full w-full object-cover -scale-x-100"
-              />
-              {!isRecording && (
-                <>
-                  <div
-                    aria-hidden="true"
-                    className={`pointer-events-none absolute left-1/2 top-[46%] h-[150px] w-[118px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 transition-colors duration-300 ${
-                      faceReady ? 'border-solid border-mint' : 'border-dashed border-white/85'
-                    }`}
-                  />
-                  {/* Colour + icon + words (never colour alone). */}
-                  <div className="absolute inset-x-3 bottom-3 flex justify-center" aria-live="polite">
-                    {faceReady ? (
-                      <span className="flex items-center gap-1.5 rounded-full bg-mint-ink px-3.5 py-1.5 text-sm font-extrabold text-white">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                          <path d="m5 13 4 4L19 7" />
-                        </svg>
-                        Great! You're ready to read
-                      </span>
-                    ) : (
-                      <span className="rounded-full bg-[#fffdfc]/95 px-3.5 py-1.5 text-sm font-extrabold text-ink">
-                        Keep your face in the circle
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
-            {isRecording && (
-              <span
-                aria-hidden="true"
-                className={`absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full border-[3px] border-[#fffdfc] text-sm font-black text-white ${
-                  recordingProblem ? 'bg-amber' : 'bg-mint'
-                }`}
-              >
-                {recordingProblem ? '!' : '✓'}
-              </span>
+            <CameraPreview
+              stream={stream}
+              onVideoNode={setVideoNode}
+              className="absolute inset-0 h-full w-full object-cover -scale-x-100"
+            />
+            {!isRecording && (
+              <>
+                <div
+                  aria-hidden="true"
+                  className={`pointer-events-none absolute left-1/2 top-[46%] h-[150px] w-[118px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 transition-colors duration-300 ${
+                    faceReady ? 'border-solid border-mint-light/60' : 'border-dashed border-white/50'
+                  }`}
+                />
+                {/* Colour + icon + words (never colour alone). */}
+                <div className="absolute inset-x-3 bottom-3 flex justify-center" aria-live="polite">
+                  {faceReady ? (
+                    <span className="flex items-center gap-1.5 rounded-full bg-goal px-3.5 py-1 text-sm font-black text-white">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="m5 13 4 4L19 7" />
+                      </svg>
+                      Great! You're ready to read
+                    </span>
+                  ) : (
+                    <span className="rounded-full border-2 border-level-tile-edge bg-white px-3.5 py-1 text-sm font-black text-level-ink">
+                      Keep your face in the circle
+                    </span>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        </div>
-
-        {/* Passage */}
-        <div className="mt-3 rounded-[22px] border-2 border-card-border bg-[#fffdfc] px-4.5 pt-4.5 pb-5">
-          <div className="flex items-center justify-between gap-2.5">
-            <p className="text-[12px] font-extrabold uppercase tracking-[0.96px] text-ink-muted">
-              Read out loud
-            </p>
-            <span className="rounded-full bg-mint-soft px-2.5 py-1 text-sm font-extrabold text-mint-ink">
-              Easy
-            </span>
-          </div>
-          {/* TODO(passage title): placeholder until the backend passage data
-              includes a title; then this shows it. */}
-          <h2 className="mt-1 mb-2.5 text-[22px] font-black leading-tight text-ink">
-            {passage?.title ?? "Today's Story"}
-          </h2>
-          {passageError ? (
-            <div role="alert" className="flex flex-col gap-3">
-              <p className="text-base leading-[24px] text-ink">
-                We couldn't load your reading passage. Please check your internet, then tap Try Again.
-              </p>
-              <button
-                type="button"
-                onClick={retryPassage}
-                className="min-h-[44px] self-start rounded-full bg-brand px-6 py-2 text-[15px] font-bold text-white"
-              >
-                Try Again
-              </button>
-            </div>
-          ) : passage ? (
-            <p className="text-[18px] font-semibold leading-[1.7] text-ink">{passage.text}</p>
-          ) : (
-            <p className="text-base leading-[24px] text-ink-muted" aria-live="polite">
-              Getting your passage ready…
-            </p>
-          )}
-        </div>
-
-        {/* Submit error, or a real-time check failed → the take was discarded. */}
-        {(errorMessage || (!isRecording && qualityFailure)) && (
-          <div role="alert" className="mt-3 flex items-start gap-2.5 rounded-[18px] bg-coral-soft px-3.5 py-3">
+          {isRecording && (
             <span
               aria-hidden="true"
-              className="flex size-7 flex-none items-center justify-center rounded-full bg-coral text-base font-black text-white"
+              className={`absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full border-[3px] border-level-tile-edge text-sm font-black ${
+                recordingProblem ? 'bg-cta text-level-ink' : 'bg-mint text-white'
+              }`}
             >
-              !
+              {recordingProblem ? '!' : '✓'}
             </span>
-            <p className="text-[15px] font-bold text-ink">
-              {errorMessage ?? `${qualityFailure.message} Let's try that again.`}
-            </p>
-          </div>
-        )}
+          )}
+        </div>
+      </div>
 
-        {isRecording ? (
-          <button
-            type="button"
-            onClick={handleStop}
-            className="mt-4.5 flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-full border-[2.5px] border-brand bg-[#fffdfc] py-4 text-[20px] font-extrabold text-brand shadow-[0px_5px_0px_#e6cfca] active:translate-y-1 active:shadow-[0px_1px_0px_#e6cfca]"
-          >
-            <span className="size-3.5 rounded-[3px] bg-brand" aria-hidden="true" />
-            I&apos;m done!
-          </button>
-        ) : (
-          <>
-            <p className="mt-3.5 text-center text-[15px] font-bold text-ink-soft">
-              Read clearly, at your own pace
+      {/* Passage */}
+      <div className="mt-4 rounded-3xl border-[3px] border-level-tile-edge bg-sticker px-4.5 pt-4 pb-5 shadow-level-tile">
+        <div className="flex items-center justify-between gap-2.5">
+          <p className="rounded-full bg-level-pill px-3 py-0.5 text-sm font-black uppercase tracking-[0.06em] text-white">
+            Read out loud
+          </p>
+          <span className="rounded-full border-2 border-level-tile-edge bg-result-green px-2.5 py-px text-sm font-black text-goal">
+            Easy
+          </span>
+        </div>
+        {/* TODO(passage title): placeholder until the backend passage data
+            includes a title; then this shows it. */}
+        <h2 className="mt-2.5 mb-2.5 text-[24px] font-black leading-tight text-level-ink">
+          {passage?.title ?? "Today's Story"}
+        </h2>
+        {passageError ? (
+          <div role="alert" className="flex flex-col gap-3">
+            <p className="text-base leading-[24px] text-ink">
+              We couldn't load your reading passage. Please check your internet, then tap Try Again.
             </p>
             <button
               type="button"
-              onClick={handleStart}
-              disabled={!passage}
-              className={`mt-3 flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-full py-4 text-[20px] font-extrabold ${
-                passage
-                  ? 'bg-brand text-white shadow-[0px_5px_0px_#7a1f1a] active:translate-y-1 active:shadow-[0px_1px_0px_#7a1f1a]'
-                  : 'cursor-not-allowed bg-[#e6d3ce] text-ink-muted'
-              }`}
+              onClick={retryPassage}
+              className="min-h-12 self-start rounded-2xl border-[3px] border-level-tile-edge bg-level-pill px-6 text-lg font-black text-white shadow-level-tile active:translate-y-1 active:shadow-none"
             >
-              <span className={`size-3.5 rounded-full ${passage ? 'bg-white' : 'bg-ink-muted'}`} aria-hidden="true" />
-              {qualityFailure ? 'Try again' : 'Start reading'}
+              Try Again
             </button>
-          </>
+          </div>
+        ) : passage ? (
+          <p className="text-[19px] font-semibold leading-[1.7] text-ink">{passage.text}</p>
+        ) : (
+          <p className="text-base leading-[24px] text-level-muted" aria-live="polite">
+            Getting your passage ready…
+          </p>
         )}
       </div>
+
+      {/* Submit error, or a real-time check failed → the take was discarded. */}
+      {(errorMessage || (!isRecording && qualityFailure)) && (
+        <div role="alert" className="mt-4 flex items-start gap-3 rounded-2xl border-[3px] border-level-tile-edge bg-result-pink px-3.5 py-3">
+          <span
+            aria-hidden="true"
+            className="flex size-7 flex-none items-center justify-center rounded-full border-2 border-level-tile-edge bg-brand text-base font-black text-white"
+          >
+            !
+          </span>
+          <p className="text-[15px] font-bold text-ink">
+            {errorMessage ?? `${qualityFailure.message} Let's try that again.`}
+          </p>
+        </div>
+      )}
+
+      {isRecording ? (
+        <button
+          type="button"
+          onClick={handleStop}
+          className="mt-5 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] border-level-tile-edge bg-white px-4 text-xl font-black text-level-ink shadow-level-tile active:translate-y-1 active:shadow-none"
+        >
+          <span className="size-3.5 rounded-[3px] bg-level-pill" aria-hidden="true" />
+          I&apos;m done!
+        </button>
+      ) : (
+        <>
+          <p className="mt-4 text-center text-[15px] font-bold text-level-muted">
+            Read clearly, at your own pace
+          </p>
+          <button
+            type="button"
+            onClick={handleStart}
+            disabled={!passage}
+            className={`mt-3 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] px-4 text-xl font-black ${
+              passage
+                ? 'border-level-tile-edge bg-level-pill text-white shadow-level-tile active:translate-y-1 active:shadow-none'
+                : 'cursor-not-allowed border-level-edge bg-sticker text-level-muted'
+            }`}
+          >
+            <span className={`size-3.5 rounded-full ${passage ? 'bg-white' : 'bg-level-edge'}`} aria-hidden="true" />
+            {qualityFailure ? 'Try again' : 'Start reading'}
+          </button>
+        </>
+      )}
       {leaveDialog}
-    </div>
+    </StickerPage>
+  )
+}
+
+/** Exit · logo (empty third column keeps the logo centred). `onExit` is left out while preparing. */
+function SessionHeader({ onExit }) {
+  return (
+    <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-[max(1rem,env(safe-area-inset-top))]">
+      {onExit ? <StickerExitButton onClick={onExit} /> : <span />}
+      <div className="flex items-center gap-1.5">
+        <span className="flex -translate-y-0.5"><LogoMark size={32} /></span>
+        <span className="text-xl font-black text-level-ink">ReadRight</span>
+      </div>
+      <span />
+    </header>
   )
 }
 
@@ -435,36 +440,14 @@ export default function SessionScreen() {
 // like a direct transition rather than a loading screen.
 function Preparing() {
   return (
-    <div className="mx-auto flex min-h-dvh max-w-[480px] flex-col bg-page font-display">
-      <Header label="READING SESSION" />
-      <div className="flex flex-1 flex-col items-center justify-center px-5 pb-10">
-        <div className="mb-5 flex size-16 items-center justify-center rounded-full bg-card text-brand">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-pulse" aria-hidden="true">
-            <path d="m23 7-7 5 7 5V7z" />
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-          </svg>
-        </div>
-        <p className="text-center text-[16px] font-semibold text-ink-soft" aria-live="polite">
+    <StickerPage>
+      <SessionHeader />
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 pb-10">
+        <img src="/mascot-reading.svg" alt="" className="w-24 motion-safe:animate-lumi-bob" />
+        <p className="text-center text-lg font-bold text-level-muted" aria-live="polite">
           Preparing camera…
         </p>
       </div>
-    </div>
-  )
-}
-
-function Header({ label, onCancel }) {
-  return (
-    <header className="bg-header">
-      <div className="mx-auto flex w-full max-w-[480px] items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2">
-          {onCancel && <ExitButton onClick={onCancel} className="-ml-2" />}
-          <LogoMark />
-          <span className="text-[20px] font-extrabold text-brand">ReadRight</span>
-        </div>
-        {label && (
-          <span className="text-[11px] font-bold tracking-[0.12em] text-ink-muted">{label}</span>
-        )}
-      </div>
-    </header>
+    </StickerPage>
   )
 }

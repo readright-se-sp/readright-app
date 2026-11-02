@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useReadAloud } from '../../hooks/useReadAloud'
 import { useAudioClip } from '../../hooks/useAudioClip'
+import { LISTEN_BUTTON, LISTEN_PLAYING, STICKER_PRIMARY, STICKER_SECONDARY } from '../ui/stickerStyles'
 
 /**
  * Bottom sheet that walks through the tricky words of one miscue type:
@@ -77,7 +78,6 @@ export function WordReviewSheet({ type, words, onClose }) {
           <span className="text-[30px] font-black leading-[1.1]">“{word.said}”</span>
           {word.said_audio_url ? (
             <PlayButton
-              className={type.dot}
               playing={clip.playingUrl === word.said_audio_url}
               label="Hear your voice"
               onClick={() => {
@@ -113,7 +113,6 @@ export function WordReviewSheet({ type, words, onClose }) {
           </p>
           {voice.supported && (
             <PlayButton
-              className="bg-mint-ink"
               playing={voice.playing}
               label="Hear it the right way"
               onClick={() => {
@@ -136,14 +135,14 @@ export function WordReviewSheet({ type, words, onClose }) {
             type="button"
             onClick={() => goTo(idx - 1)}
             disabled={idx === 0}
-            className="h-14 flex-1 rounded-[18px] border-2 border-[#ebcfc8] bg-white text-[17px] font-black text-ink-soft disabled:opacity-40"
+            className={`${STICKER_SECONDARY} min-h-14 flex-1 px-2 text-[17px] disabled:opacity-40`}
           >
             ‹ Back
           </button>
           <button
             type="button"
             onClick={() => (last ? close() : goTo(idx + 1))}
-            className="h-14 flex-[2] rounded-[18px] bg-brand text-[17px] font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-[0_1px_0_#7a1f1b]"
+            className={`${STICKER_PRIMARY} min-h-14 flex-[2] px-2 text-[19px]`}
           >
             {last ? 'All done!' : 'Next word ›'}
           </button>
@@ -153,12 +152,13 @@ export function WordReviewSheet({ type, words, onClose }) {
   )
 }
 
-function PlayButton({ className, playing, label, onClick }) {
+/** Green "tap to hear" button, like every listen button in the app. */
+function PlayButton({ playing, label, onClick }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-13 items-center justify-center gap-2.5 rounded-2xl text-base font-black text-white ${className}`}
+      className={`flex min-h-13 items-center justify-center gap-2.5 rounded-2xl text-base font-black ${playing ? LISTEN_PLAYING : LISTEN_BUTTON}`}
     >
       <span
         aria-hidden="true"

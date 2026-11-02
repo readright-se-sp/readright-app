@@ -6,18 +6,20 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
 import { LEARNER_GRADES } from '../utils/gradeLevels'
+import { SkyBackground } from '../components/ui/SkyBackground'
+import { STICKER_PRIMARY } from '../components/ui/stickerStyles'
 const MIN_PASSWORD_LENGTH = 6
 
 const labelClass =
-  'px-1 text-[12px] font-extrabold uppercase leading-[16px] tracking-[0.96px] text-ink-soft'
+  'px-1 text-[12px] font-extrabold uppercase leading-[16px] tracking-[0.96px] text-sky-ink'
 const inputClass =
-  'min-h-[44px] w-full rounded-[12px] border-2 border-card-border bg-white py-3.5 text-[16px] font-semibold text-ink outline-none placeholder:font-semibold placeholder:text-card-border focus:border-brand'
+  'min-h-[44px] w-full rounded-[12px] border-2 border-sky bg-white py-2.5 text-[16px] font-semibold text-sky-deep outline-none placeholder:font-semibold placeholder:text-sky-muted hover:border-amber focus:border-amber'
 
 function FieldIcon({ children }) {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-card-border"
+      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sky-muted"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         {children}
@@ -41,7 +43,7 @@ function ShowPasswordToggle({ shown, onToggle }) {
       type="button"
       onClick={onToggle}
       aria-label={shown ? 'Hide password' : 'Show password'}
-      className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center text-card-border"
+      className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center text-sky-muted"
     >
       {shown ? (
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -139,36 +141,32 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-[#f7ebe9] px-4 py-8 font-display">
-      <div className="w-full max-w-[340px]">
-        <div className="flex flex-col items-center rounded-[24px] border-2 border-card-border bg-white/85 px-8 pt-8 pb-8 shadow-[0px_12px_40px_0px_rgba(140,123,107,0.12)] backdrop-blur-[4px] sm:px-10">
-          {/* Mascot */}
-          <div className="relative mb-2 flex items-center justify-center">
-            <div
-              aria-hidden="true"
-              className="absolute size-[112px] rounded-full bg-[#ffb4ab]/20 blur-[12px]"
-            />
-            <img src="/mascot-waving.svg" alt="" className="relative h-[120px] w-auto" />
-          </div>
+    <div className="relative min-h-dvh overflow-clip font-display sm:flex sm:items-center sm:justify-center sm:py-8">
+      <SkyBackground />
+      {/* Like LoginPage but without Lumi, so the long form fits: the sheet sits at
+          the bottom with the sky showing above it. sm+: a centred, fully rounded sheet. */}
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col justify-end pt-[max(1.5rem,env(safe-area-inset-top))] sm:min-h-0 sm:pt-0">
+        {/* Sign-up sheet */}
+        <div className="flex flex-col items-center rounded-t-[32px] bg-white px-6 pt-7 pb-[max(1.5rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(60,110,150,0.15)] sm:rounded-[32px] sm:px-10 sm:shadow-[0_12px_40px_rgba(60,110,150,0.18)]">
 
-          <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-[32px] font-extrabold leading-[40px] text-ink">
+          <div className="flex flex-col items-center gap-1 text-center">
+            <h1 className="text-[28px] font-extrabold leading-[34px] text-sky-deep">
               Join ReadRight!
             </h1>
-            <p className="text-[16px] font-normal leading-[24px] text-ink-soft">
+            <p className="text-[16px] font-normal leading-[24px] text-sky-ink">
               Your reading adventure starts here.
             </p>
           </div>
 
           {needsConfirmation ? (
             <div role="status" className="mt-6 flex w-full flex-col items-center gap-3 text-center">
-              <p className="rounded-[12px] bg-badge-bg px-4 py-4 text-base font-semibold text-ink">
+              <p className="rounded-[12px] bg-sky-soft px-4 py-4 text-base font-semibold text-sky-deep">
                 Almost done! We sent a message to <span className="font-extrabold">{email}</span>.
                 Open it and tap the link inside, then come back and log in.
               </p>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} noValidate className="mt-6 flex w-full flex-col gap-4">
+            <form onSubmit={handleSubmit} noValidate className="mt-5 flex w-full flex-col gap-3">
               {/* Full name */}
               <div className="flex flex-col gap-1">
                 <label htmlFor="fullName" className={labelClass}>Full Name</label>
@@ -259,16 +257,16 @@ export default function RegisterPage() {
                       required
                       value={gradeLevel}
                       onChange={(e) => setGradeLevel(e.target.value)}
-                      className={`${inputClass} appearance-none pl-4 pr-10 ${gradeLevel ? '' : 'text-card-border'}`}
+                      className={`${inputClass} appearance-none pl-4 pr-10 ${gradeLevel ? '' : 'text-sky-muted'}`}
                     >
                       <option value="" disabled>Select</option>
                       {LEARNER_GRADES.map((g) => (
-                        <option key={g} value={g} className="text-ink">Grade {g}</option>
+                        <option key={g} value={g} className="text-sky-deep">Grade {g}</option>
                       ))}
                     </select>
                     <span
                       aria-hidden="true"
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-brand"
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sky-ink"
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="m6 9 6 6 6-6" />
@@ -299,12 +297,12 @@ export default function RegisterPage() {
                   type="checkbox"
                   checked={agreed}
                   onChange={(e) => setAgreed(e.target.checked)}
-                  className="size-6 flex-none cursor-pointer rounded-[7px] accent-brand"
+                  className="size-6 flex-none cursor-pointer rounded-[7px] accent-sky-ink"
                 />
                 {/* Terms / Privacy pages don't exist yet — shown as emphasized text, not links. */}
-                <span className="text-base text-ink-soft">
-                  I agree to the <span className="font-extrabold text-brand">Terms</span> and{' '}
-                  <span className="font-extrabold text-brand">Privacy Policy</span>
+                <span className="text-base text-sky-ink">
+                  I agree to the <span className="font-extrabold text-sky-deep">Terms</span> and{' '}
+                  <span className="font-extrabold text-sky-deep">Privacy Policy</span>
                 </span>
               </label>
 
@@ -317,35 +315,38 @@ export default function RegisterPage() {
                 </p>
               )}
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-2 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-brand py-4 text-[24px] font-bold leading-[32px] text-white shadow-[0px_4px_0px_#871f1a] disabled:opacity-60"
-              >
-                {loading ? (
-                  'Creating account…'
-                ) : (
-                  <>
-                    <span>Create Account</span>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14" />
-                      <path d="m13 6 6 6-6 6" />
-                    </svg>
-                  </>
-                )}
-              </button>
+              {/* Submit — sticks to the bottom of the screen while the form scrolls on
+                  short phones, so the button is always in view. */}
+              <div className="sticky bottom-0 -mx-1 bg-white px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`${STICKER_PRIMARY} min-h-15 gap-2 px-4 text-[22px]`}
+                >
+                  {loading ? (
+                    'Creating account…'
+                  ) : (
+                    <>
+                      <span>Create Account</span>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14" />
+                        <path d="m13 6 6 6-6 6" />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              </div>
             </form>
           )}
 
           {/* Back to login */}
-          <div className="mt-6 flex flex-col items-center gap-2">
-            <span className="text-[16px] font-normal leading-[24px] text-ink-soft">
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-x-1.5">
+            <span className="text-[16px] font-normal leading-[24px] text-sky-ink">
               Already have an account?
             </span>
             <Link
               to="/login"
-              className="inline-flex min-h-[44px] items-center gap-1 text-[18px] font-bold leading-[28px] text-brand"
+              className="inline-flex min-h-[44px] items-center gap-1 text-[18px] font-extrabold leading-[28px] text-link-orange underline decoration-2 underline-offset-4"
             >
               Log In
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

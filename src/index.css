@@ -22,6 +22,7 @@
   --color-brand:       #a5352d;
   --color-goal:        #36663e;
   --color-amber:       #e6a817;
+  --color-link-orange: #e06500; /* bright orange text links on white (3.5:1) */
   --color-ink:         #241917;
   --color-ink-soft:    #58413f;
   --color-ink-muted:   #6b5c4d;
@@ -39,6 +40,12 @@
 
   /* "Before we start" step cards + device-on pills */
   --color-peach:       #fff3ec;
+  /* Main (primary) buttons: flat warm yellow, a thin white border, soft
+     darker inner edges top and bottom, and a small soft drop shadow. White
+     text on it is low contrast (≈1.6:1), so keep button text heavy and ≥ 19px. */
+  --color-cta:          #ffc43d;
+  --shadow-cta:         inset 0 3px 6px rgb(232 150 20 / 0.35), inset 0 -4px 8px rgb(232 150 20 / 0.45), 0 3px 6px rgb(110 70 20 / 0.22);
+  --shadow-cta-pressed: inset 0 3px 6px rgb(232 150 20 / 0.45), inset 0 -2px 4px rgb(232 150 20 / 0.35), 0 1px 2px rgb(110 70 20 / 0.22);
   --color-sky:         #7e9be0;
   --color-sky-soft:    #eef2fc;
   --color-coral:       #e0483e;
@@ -54,6 +61,128 @@
   --color-lilac-ink:   #5e3fa0;
 
   /* Recording bubble: amber halo while a live check needs attention */
+  /* Login sky: light-blue gradient behind the card, with drifting clouds */
+  --color-sky-top:     #8fd0f5;
+  --color-sky-bottom:  #e3f4fd;
+  /* Login text on the white sheet: navy title, blue text (≈7.6:1), soft blue icons/placeholders */
+  --color-sky-deep:    #24366e;
+  --color-sky-ink:     #34508f;
+  --color-sky-muted:   #93a7d4;
+  /* Dashboard square tiles: solid colour with a darker "ledge" underneath (white text ≈4.5:1 / 3.9:1) */
+  --color-tile-blue:   #2f6fe0;
+  --color-tile-pink:   #e0507c;
+  --color-tile-blue-deep: #1f4fb0; /* outline + ledge */
+  --color-tile-pink-deep: #b0355c;
+  --color-tile-blue-ink:  #1b3c8f; /* text on the cream stickers (≈9:1) */
+  --color-tile-pink-ink:  #7a1f3d;
+  --shadow-tile-blue:  0 6px 0 #1f4fb0;
+  --shadow-tile-pink:  0 6px 0 #b0355c;
+  /* Weekly faces cards ("My reading level"): peach card, orange edge, brown tile outlines */
+  --color-level-card:      #ffe7d8;
+  --color-level-edge:      #f2a37c;
+  --color-level-blob:      #ffd3bb;
+  --color-level-tile-edge: #8a4436;
+  --color-level-ink:       #7a2e1f; /* title (≈8:1) */
+  --color-level-muted:     #8f4c3b; /* week names (≈5:1) */
+  --color-level-pill:      #d9472f; /* "Last 4 weeks" / "This week" pills, white text */
+  --color-track:           #e5825e; /* "How fast Lumi flies" running track */
+  --color-track-deep:      #bd5531; /* deeper track orange for the "Lumi race" pill (white text ≈4.7:1) */
+  --color-track-yellow:    #ffd45c; /* "This week" label, chosen story level */
+  --color-track-yellow-edge: #e0a72a; /* outline + ledge of the chosen story level */
+  --color-gold-light:      #fff1b8; /* shine in the Independent score's gold ring */
+  --shadow-track-yellow:   0 5px 0 #e0a72a;
+  --color-shelf-card:      #fff2c7; /* "Past readings": yellow version of the sticker card */
+  --color-shelf-edge:      #efc055;
+  --shadow-shelf-card:     0 6px 0 #efc055;
+  /* "Past readings" (My shelf): blue gingham card with navy outlines. */
+  --color-shelf-sky:       #bfe2f9;
+  --color-shelf-check:     rgb(90 170 232 / 0.32); /* gingham stripes */
+  --color-shelf-sky-edge:  #3f97d3;
+  --shadow-shelf-sky:      0 6px 0 #3f97d3;
+  --color-shelf-navy:      #2a5a99; /* title, › circle, button outline + text (≈7:1 on white) */
+  --shadow-shelf-navy:     0 5px 0 #2a5a99;
+  --color-cream-edge:      #e3c899; /* soft outline + ledge for cream/white tiles and buttons */
+  --shadow-cream-edge:     0 5px 0 #e3c899;
+  --color-dash-line:       #d4ad80; /* soft dashed outlines on cream boxes (empty Word Detective box, tips) */
+  --color-cream-button:    #fffaf3; /* small round/pill buttons with the cream edge (✕, ‹, filters) */
+  --shadow-cream-button:   0 3px 0 #e3c899;
+  --color-lily:            #82c65b;
+  --color-lily-vein:       #62aa40;
+  --color-lotus-deep:      #e8678f; /* › on story tiles: a deeper lotus pink, white arrow ≈3.1:1 */
+  --color-pond-top:        #c9eef0; /* /history pond water: light so dark text stays clear */
+  --color-pond-bottom:     #9fd9e3;
+  --shadow-level-card:     0 6px 0 #f2a37c;
+  /* Dashboard peach cards: a step richer than --color-level-card so they don't
+     look washed out under the bold top cards (still softer than those). */
+  --color-dash-card:       #ffd5bd;
+  --color-dash-blob:       #ffc19e;
+  --shadow-dash-card:      0 6px 0 #ec8b5e;
+  /* "How fast Lumi flies": soft mint, so the three cards after the top ones aren't all apricot. */
+  --color-dash-mint:       #bfe6c2;
+  --color-dash-mint-blob:  #d5f0d6; /* lighter corner blob */
+  --color-dash-mint-edge:  #8bc893; /* message box outline */
+  --shadow-dash-mint:      0 6px 0 #8bc893; /* a darker shade of the card green */
+  --shadow-level-button:   0 3px 0 #f2a37c; /* thinner ledge for peach buttons (/history) */
+  --shadow-level-tile:     0 5px 0 #8a4436;
+  --shadow-sticker-blue: 0 4px 0 #1f4fb0;
+  --shadow-sticker-pink: 0 4px 0 #b0355c;
+  /* Streak card "sticker": teal gingham, dark-teal outlines + ledge, cream sticker with dark-teal text */
+  --color-tile-teal:       #3fbfa3;
+  --color-tile-teal-deep:  #1d7f6c;
+  --color-tile-teal-ink:   #145c4e;
+  --color-sticker:         #fff7e8;
+  --color-coral-ink:       #c8452f; /* "MY STREAK" on the sticker (≈4.6:1) */
+  --shadow-tile-teal:      0 6px 0 #1d7f6c;
+  --shadow-sticker:        0 4px 0 #1d7f6c;
+  /* "Tap to hear" buttons (Hear it, Listen, Read aloud): green, darker green edge. */
+  --color-listen:          #278048; /* fill, white text (≈4.9:1) */
+  --color-listen-edge:     #1a5230; /* outline + ledge; fill while playing */
+  --color-listen-deep:     #10351e; /* outline + ledge while playing */
+  --shadow-listen:         0 4px 0 #1a5230;
+  --shadow-listen-deep:    0 4px 0 #10351e;
+  --shadow-taped:          0 4px 10px rgb(138 68 54 / 0.18); /* paper taped onto a card */
+  /* See-through washi tape on the week tiles (one colour per week). */
+  --color-tape-mint:       rgb(120 208 162 / 0.85);
+  --color-tape-blue:       rgb(128 168 245 / 0.85);
+  --color-tape-yellow:     rgb(255 196 61 / 0.85);
+  --color-tape-pink:       rgb(255 138 170 / 0.85);
+  /* Results page: sticker cards share the level-card brown outline + ledge;
+     these are the fills the dashboard palette had no match for. */
+  --color-result-blue:     #dfe8fd;
+  --color-result-pink:     #ffe2e0;
+  --color-result-green:    #e3f4da;
+  --color-result-face-blue:  #a8c0f5;
+  --color-result-face-green: #9dd889;
+  --color-result-olive:    #6b4708; /* text on the yellow cards (≈8:1) */
+  /* Result card ledges: a darker shade of each card's own fill (no outline). */
+  --shadow-ledge-green:    0 5px 0 #b3dba0; /* bg-result-green */
+  --shadow-ledge-blue:     0 5px 0 #a9c0f3; /* bg-result-blue */
+  --shadow-ledge-yellow:   0 5px 0 #ecc65a; /* bg-shelf-card */
+  --shadow-ledge-pink:     0 5px 0 #f2b0a9; /* bg-result-pink */
+  --shadow-ledge-lilac:    0 5px 0 #cbb8f0; /* bg-lilac-soft */
+  /* Reading Aloud Score: bold gingham card per level (Instructional reuses tile-blue). */
+  --color-score-green:      #3fae63;
+  --color-score-green-deep: #23753f;
+  --color-score-amber:      #f2a93b;
+  --color-score-amber-deep: #b5700f;
+  /* Word Detective boxes: a step richer than the result-* pastels so they
+     stand out from the peach page; *-edge is their outline + ledge. */
+  --color-word-pink:        #ffd0cb;
+  --color-word-pink-edge:   #ee9d95;
+  --color-word-yellow:      #ffe9a6;
+  --color-word-yellow-edge: #e2b13c;
+  --color-word-blue:        #cfdcfc;
+  --color-word-blue-edge:   #93adee;
+  --color-word-lilac:       #e6dbfb;
+  --color-word-lilac-edge:  #b69de9;
+  --color-word-green:       #d3eec6;
+  --color-word-green-edge:  #9ccf86;
+  --animate-cloud-drift: cloud-drift 10s ease-in-out infinite;
+  @keyframes cloud-drift {
+    0%, 100% { transform: translateX(0); }
+    50%      { transform: translateX(14px); }
+  }
+
   --animate-attention-pulse: attention-pulse 1.4s ease-out infinite;
   @keyframes attention-pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(230, 168, 23, 0.55); }
@@ -75,6 +204,23 @@
   @keyframes dot-bounce {
     0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
     40%           { opacity: 1; transform: translateY(-3px); }
+  }
+
+  /* Results: an Independent score's gold ring turns, and stars/sparkles glitter */
+  --animate-ring-spin: spin 2s linear infinite;
+  /* Sparkles shrink below and grow past their normal size, fully visible the
+     whole time, taking turns (staggered with animation-delay). "glitter"
+     pulses with a small tilt; "glitter-spin" also turns a full circle. */
+  --animate-glitter: glitter 1.75s ease-in-out infinite both;
+  @keyframes glitter {
+    0%, 100% { transform: scale(0.5) rotate(0deg); }
+    50%      { transform: scale(1.35) rotate(20deg); }
+  }
+  --animate-glitter-spin: glitter-spin 1.75s ease-in-out infinite both;
+  @keyframes glitter-spin {
+    0%   { transform: scale(0.5) rotate(0deg); }
+    50%  { transform: scale(1.35) rotate(180deg); }
+    100% { transform: scale(0.5) rotate(360deg); }
   }
 
   /* Dashboard tricky words: sound bars on the "Playing" button */

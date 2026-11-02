@@ -124,14 +124,6 @@ export function trickyWords(sessions, limit = 3) {
 }
 
 /**
- * The story grades the learner has read, lowest first (e.g. [3, 4]). Empty
- * until sessions carry `passage_grade` — TODO(passage grade): not saved yet.
- */
-export function storyGrades(sessions) {
-  return [...new Set(sessions.map((s) => s.passage_grade).filter((g) => g != null))].sort((a, b) => a - b)
-}
-
-/**
  * The reading habit seen most often in the last few readings (a behaviour-flag
  * key, e.g. 'monotone_reading'), or null when none was seen — the card then praises.
  */

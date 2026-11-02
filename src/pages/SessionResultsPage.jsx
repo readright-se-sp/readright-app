@@ -8,7 +8,8 @@
  * Created : 2026-05-17 by Reev Santillan
  *
  * Renders the Phil-IRI assessment output after the reading + comprehension
- * quiz. Matches the "Results Page" redesign (Lumi, kid-friendly sections).
+ * quiz. Matches the "Results Page" redesign (Lumi, kid-friendly sections) in
+ * the dashboard's sticker style: peach page, brown-outlined cards with a ledge.
  *
  * Data source: React Router location.state — SessionScreen navigates with
  * { state: { result, passage, isFirstSession, quizAnswers } } (see
@@ -22,9 +23,10 @@
  *
  * Sections (in order):
  *   1. "You did it, <name>!" hero
- *   2. Did you understand the story?   → ComprehensionCard (only when the result
+ *   2. Reading Aloud Score              → ReadingScoreCard (headline card: word
+ *      recognition + level)
+ *   3. Did you understand the story?   → ComprehensionCard (only when the result
  *      has comprehension_level — TODO(comprehension score): backend to add)
- *   3. Reading Aloud Score              → ReadingScoreCard (word recognition + level)
  *   4. How fast did Lumi fly?           → SpeedCard (words per minute vs goal)
  *   5. Word Detective                   → WordDetective (+ WordReviewSheet when the
  *      result has miscue_details — TODO(miscue details): backend to add)
@@ -42,6 +44,7 @@ import { isDevSample } from '../utils/devPreview'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { LogoMark } from '../components/icons'
+import { Star } from '../components/dashboard/DashboardParts'
 import { ComprehensionCard } from '../components/results/ComprehensionCard'
 import { ReadingScoreCard } from '../components/results/ReadingScoreCard'
 import { SpeedCard } from '../components/results/SpeedCard'
@@ -80,33 +83,42 @@ export default function SessionResultsPage() {
   const storyTitle = state?.passage?.title
 
   return (
-    <div className="min-h-dvh bg-[#f3e4e0] font-display text-ink sm:py-6">
-      <div className="mx-auto flex w-full max-w-[480px] flex-col gap-3.5 bg-[#fff9f6] px-4.5 pb-7 sm:rounded-[32px] sm:border-2 sm:border-[#e3c3bb]">
-        <header className="flex items-center justify-between pb-1.5 pt-5">
+    <div className="min-h-dvh bg-level-card font-display text-ink sm:bg-divider sm:py-6">
+      <div className="relative mx-auto flex w-full max-w-[480px] flex-col gap-4 overflow-clip bg-level-card px-4.5 pb-8 sm:rounded-[32px] sm:border-[3px] sm:border-level-edge">
+        {/* Big soft circle behind the header + Lumi, with a few sparkles. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[300px]">
+          <span className="absolute -top-[150px] left-1/2 size-[420px] -translate-x-1/2 rounded-full bg-level-blob" />
+          <Star className="left-[14%] top-[118px] size-6 text-cta" />
+          <Star className="right-[15%] top-[86px] size-7 text-coral" />
+          <span className="absolute left-[24%] top-[236px] size-2.5 rounded-full bg-mint" />
+          <span className="absolute right-[24%] top-[206px] size-3 rounded-full bg-tile-blue" />
+        </div>
+
+        <header className="relative flex items-center justify-between pt-[max(1.25rem,env(safe-area-inset-top))]">
           <div className="flex items-center gap-2">
-            <LogoMark size={34} />
-            <span className="text-[21px] font-black text-brand">ReadRight</span>
+            <span className="flex -translate-y-1"><LogoMark size={36} /></span>
+            <span className="text-[22px] font-black text-level-ink">ReadRight</span>
           </div>
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
             aria-label="Close and go back to my dashboard"
-            className="flex size-11 items-center justify-center rounded-full border-[1.5px] border-[#ebcfc8] bg-white text-[22px] font-extrabold text-ink-soft"
+            className="flex size-12 items-center justify-center rounded-full border-[3px] border-level-tile-edge bg-white text-level-ink shadow-level-tile active:translate-y-1 active:shadow-none"
           >
-            ×
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
           </button>
         </header>
 
-        <div className="flex flex-col items-center pb-1 pt-1.5 text-center">
-          <span className="flex size-32 items-center justify-center rounded-full bg-coral-soft ring-4 ring-[#f6dcd8]">
-            <img src="/mascot-reading.svg" alt="" className="w-[100px]" />
-          </span>
-          <h1 className="mt-1.5 text-[28px] font-black leading-[1.15]">
+        <div className="relative flex flex-col items-center pb-2 text-center">
+          <img src="/mascot-reading.svg" alt="" className="w-[150px] motion-safe:animate-lumi-bob" />
+          <h1 className="mt-5 text-[32px] font-black leading-[1.1] text-balance text-level-ink">
             {firstName ? `You did it, ${firstName}!` : 'You did it!'}
           </h1>
-          <p className="mt-1 text-base font-semibold text-ink-soft">
+          <p className="mt-1.5 text-[17px] font-bold text-level-muted">
             {storyTitle ? (
-              <>Here’s how you read <b className="text-brand">{storyTitle}</b></>
+              <>Here’s how you read <b className="text-level-ink">{storyTitle}</b></>
             ) : (
               'Here’s how you read today'
             )}
@@ -116,28 +128,28 @@ export default function SessionResultsPage() {
         {isFirstSession && <FirstResultsNote />}
         {saveStatus === 'failed' && <SaveFailureBanner />}
 
-        <ComprehensionCard level={result.comprehension_level} />
         <ReadingScoreCard score={result.word_recognition_pct} readingLevel={result.reading_level} />
+        <ComprehensionCard level={result.comprehension_level} />
         <SpeedCard wpm={result.wpm} />
-        <div className="mt-2">
+        <div className="mt-3">
           <WordDetective result={result} />
         </div>
-        <div className="mt-2">
+        <div className="mt-3">
           <HowIRead result={result} />
         </div>
 
-        <div className="mt-2 flex flex-col gap-2.5">
+        <div className="mt-4 flex flex-col gap-3.5">
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="min-h-[58px] rounded-[18px] bg-brand text-lg font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-[0_1px_0_#7a1f1b]"
+            className="min-h-14 rounded-2xl border-[3px] border-level-tile-edge bg-level-pill px-4 text-xl font-black text-white shadow-level-tile active:translate-y-1 active:shadow-none"
           >
             See My Stars
           </button>
           <button
             type="button"
             onClick={() => navigate('/session')}
-            className="min-h-[58px] rounded-[18px] border-2 border-brand bg-white text-lg font-black text-brand"
+            className="min-h-14 rounded-2xl border-[3px] border-level-tile-edge bg-white px-4 text-xl font-black text-level-ink shadow-level-tile active:translate-y-1 active:shadow-none"
           >
             Read Another Story
           </button>
@@ -150,8 +162,8 @@ export default function SessionResultsPage() {
 /** First-ever results: a short note explaining what this page is (RR-048). */
 function FirstResultsNote() {
   return (
-    <div className="rounded-2xl border-[1.5px] border-[#f0dfc0] bg-[#fef9f0] px-4 py-3.5">
-      <p className="text-base font-black text-ink">Here are your results! 🎉</p>
+    <div className="rounded-2xl border-[3px] border-dashed border-dash-line bg-sticker px-4 py-3.5">
+      <p className="text-[17px] font-black text-level-ink">Here are your results! 🎉</p>
       <p className="mt-0.5 text-[15px] font-semibold leading-[1.45] text-ink-soft">
         These show how you read today. Check your progress dashboard to see how you improve over time.
       </p>
@@ -166,7 +178,7 @@ function FirstResultsNote() {
  */
 function SaveFailureBanner() {
   return (
-    <div role="alert" className="flex items-start gap-3 rounded-2xl border border-amber bg-amber/10 px-4 py-3">
+    <div role="alert" className="flex items-start gap-3 rounded-2xl border-[3px] border-amber bg-shelf-card px-4 py-3">
       <span
         className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-amber text-[12px] font-bold text-white"
         aria-hidden="true"

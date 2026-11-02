@@ -65,7 +65,7 @@ export function DashboardError({ onRetry }) {
 const SKELETONS = [
   { title: 'My reading level', height: 'h-24' },
   { title: 'How fast Lumi flies', height: 'h-36' },
-  { title: 'Did you understand the stories?', height: 'h-24' },
+  { title: 'My tricky words', height: 'h-24' },
 ]
 
 /** Light placeholders while the history loads. Never covers Start Reading. */

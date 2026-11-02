@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuthContext } from '../context/AuthContext'
+import { SkyBackground } from '../components/ui/SkyBackground'
+import { STICKER_PRIMARY } from '../components/ui/stickerStyles'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -37,25 +39,30 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-[#f7ebe9] px-4 py-8 font-display">
-      <div className="w-full max-w-[340px]">
-        {/* Login card */}
-        <div className="flex flex-col items-center rounded-[24px] border-2 border-card-border bg-white/85 px-10 pt-10 pb-8 shadow-[0px_12px_40px_0px_rgba(140,123,107,0.12)] backdrop-blur-[4px]">
-          {/* Mascot */}
-          <div className="relative mb-2 flex items-center justify-center">
-            <div
-              aria-hidden="true"
-              className="absolute size-[128px] rounded-full bg-[#ffb4ab]/20 blur-[12px]"
-            />
-            <img src="/mascot-reading.svg" alt="" className="relative h-[152px] w-auto" />
+    <div className="relative min-h-dvh overflow-hidden font-display sm:flex sm:items-center sm:justify-center sm:py-8">
+      <SkyBackground />
+      {/* Mobile: Lumi on the sky, then a full-width sheet from about halfway down.
+          sm+: the same layout in a centred column with a fully rounded sheet. */}
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col sm:min-h-0">
+        {/* Lumi floats on the sky above the sheet; this area takes the space left over. */}
+        <div className="flex min-h-[30dvh] flex-1 items-end justify-center px-4 pb-5 pt-[max(2.5rem,env(safe-area-inset-top))] sm:flex-none sm:pt-6">
+          <div className="relative flex items-center justify-center">
+            <div aria-hidden="true" className="absolute size-[150px] rounded-full bg-white/50 blur-[18px]" />
+            <img src="/mascot-reading.svg" alt="" className="relative h-[170px] w-auto motion-safe:animate-lumi-bob" />
           </div>
+        </div>
+
+        {/* Login sheet */}
+        <div className="flex flex-col items-center rounded-t-[32px] bg-white px-6 pt-8 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-[0_-8px_30px_rgba(60,110,150,0.15)] sm:rounded-[32px] sm:px-10 sm:shadow-[0_12px_40px_rgba(60,110,150,0.18)]">
+          {/* App name, same wordmark as the dashboard header */}
+          <p className="mb-4 text-[22px] font-black text-brand">ReadRight</p>
 
           {/* Welcome text */}
           <div className="flex flex-col items-center gap-2 text-center">
-            <h1 className="text-[32px] font-extrabold leading-[40px] text-ink">
+            <h1 className="text-[32px] font-extrabold leading-[40px] text-sky-deep">
               Welcome Back!
             </h1>
-            <p className="text-[16px] font-normal leading-[24px] text-ink-soft">
+            <p className="text-[16px] font-normal leading-[24px] text-sky-ink">
               Ready to go on another adventure?
             </p>
           </div>
@@ -66,14 +73,14 @@ export default function LoginPage() {
             <div className="flex flex-col gap-1">
               <label
                 htmlFor="email"
-                className="px-1 text-[12px] font-extrabold uppercase leading-[16px] tracking-[0.96px] text-ink-soft"
+                className="px-1 text-[12px] font-extrabold uppercase leading-[16px] tracking-[0.96px] text-sky-ink"
               >
                 Email
               </label>
               <div className="relative">
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-card-border"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sky-muted"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -88,7 +95,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
-                  className="min-h-[44px] w-full rounded-[12px] border-2 border-card-border bg-white py-3.5 pl-10 pr-4 text-[16px] font-semibold text-ink outline-none placeholder:font-semibold placeholder:text-card-border focus:border-brand"
+                  className="min-h-[44px] w-full rounded-[12px] border-2 border-sky bg-white py-3.5 pl-10 pr-4 text-[16px] font-semibold text-sky-deep outline-none placeholder:font-semibold placeholder:text-sky-muted hover:border-amber focus:border-amber"
                 />
               </div>
             </div>
@@ -98,14 +105,14 @@ export default function LoginPage() {
               <div className="flex items-center justify-between px-1">
                 <label
                   htmlFor="password"
-                  className="text-[12px] font-extrabold uppercase leading-[16px] tracking-[0.96px] text-ink-soft"
+                  className="text-[12px] font-extrabold uppercase leading-[16px] tracking-[0.96px] text-sky-ink"
                 >
                   Password
                 </label>
                 {/* Stub: no recovery flow / route exists yet. */}
                 <button
                   type="button"
-                  className="-my-3 inline-flex min-h-[44px] items-center px-1 text-[11px] font-bold leading-[16px] text-brand"
+                  className="-my-3 inline-flex min-h-[44px] items-center px-1 text-[11px] font-bold leading-[16px] text-sky-ink"
                 >
                   Forgot?
                 </button>
@@ -113,7 +120,7 @@ export default function LoginPage() {
               <div className="relative">
                 <span
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-card-border"
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sky-muted"
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="4" y="11" width="16" height="10" rx="2" />
@@ -128,13 +135,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  className="min-h-[44px] w-full rounded-[12px] border-2 border-card-border bg-white py-3.5 pl-10 pr-12 text-[16px] font-semibold text-ink outline-none placeholder:font-semibold placeholder:text-card-border focus:border-brand"
+                  className="min-h-[44px] w-full rounded-[12px] border-2 border-sky bg-white py-3.5 pl-10 pr-12 text-[16px] font-semibold text-sky-deep outline-none placeholder:font-semibold placeholder:text-sky-muted hover:border-amber focus:border-amber"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center text-card-border"
+                  className="absolute right-1 top-1/2 flex min-h-[44px] min-w-[44px] -translate-y-1/2 items-center justify-center text-sky-muted"
                 >
                   {showPassword ? (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -166,7 +173,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-brand py-4 text-[24px] font-bold leading-[32px] text-white shadow-[0px_4px_0px_#871f1a] disabled:opacity-60"
+              className={`${STICKER_PRIMARY} min-h-15 gap-2 px-4 text-[22px]`}
             >
               {loading ? (
                 'Signing in…'
@@ -183,13 +190,13 @@ export default function LoginPage() {
           </form>
 
           {/* Registration link → learner self sign-up */}
-          <div className="mt-6 flex flex-col items-center gap-2">
-            <span className="text-[16px] font-normal leading-[24px] text-ink-soft">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-1.5">
+            <span className="text-[16px] font-normal leading-[24px] text-sky-ink">
               New to ReadRight?
             </span>
             <Link
               to="/register"
-              className="inline-flex min-h-[44px] items-center gap-1 text-[18px] font-bold leading-[28px] text-brand"
+              className="inline-flex min-h-[44px] items-center gap-1 text-[18px] font-extrabold leading-[28px] text-link-orange underline decoration-2 underline-offset-4"
             >
               Join ReadRight
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
