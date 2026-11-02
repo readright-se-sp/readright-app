@@ -19,11 +19,11 @@
  *
  * ── Data ─────────────────────────────────────────────────────────────────
  *
- *  Source : useSessionHistory() → static samples for now (data/sampleData.js).
+ *  Source : useSessionHistory() → GET /v1/dashboard, or static samples
+ *           (data/sampleData.js) while VITE_USE_V1_API is off.
  *
- *  TODO(passage title) / TODO(passage grade): cards say "Story N", and the
- *  chips and grade headings are hidden, unless sessions carry `passage_title`
- *  / `passage_grade`.
+ *  TODO(passage grade): the chips and grade headings are hidden unless sessions
+ *  carry `passage_grade`. Without `passage_title`, cards say "Story N".
  */
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'

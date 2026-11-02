@@ -3,7 +3,7 @@
 // the learner turns the devices on; /quality-check only runs the GO1 checks.
 // Permission state comes from useMediaStream, so the native prompt still only
 // fires after the learner taps (explanation-before-prompt).
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useMediaStream } from '../hooks/useMediaStream'
 import ExitButton from '../components/ui/ExitButton'
 
@@ -37,6 +37,7 @@ function OnPill({ children }) {
 
 export default function PrePermissionScreen() {
   const navigate = useNavigate()
+  const { state: routeState } = useLocation()
   const { permissionStatus, errorKind, requestStream, retry } = useMediaStream()
 
   function handleLetsGo() {
@@ -44,7 +45,9 @@ export default function PrePermissionScreen() {
     localStorage.setItem('rr_onboarding_seen', 'true')
     // Leaving unmounts useMediaStream, which releases the devices so
     // /quality-check can re-acquire them without an "in use" error.
-    navigate('/quality-check', { state: { isFirstSession, devicesReady: true } })
+    navigate('/quality-check', {
+      state: { isFirstSession, devicesReady: true, passageGrade: routeState?.passageGrade },
+    })
   }
 
   return (
