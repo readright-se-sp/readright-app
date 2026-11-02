@@ -54,7 +54,9 @@ readright-app/
 │   │   ├── QualityCheckScreen.jsx   # /quality-check — GO1 four-check gate (useQualityGate) → /session
 │   │   ├── SessionScreen.jsx        # /session — permission gate + passage + record/stop + inline processing
 │   │   ├── SessionResultsPage.jsx   # /results — results display + useSessionStorage
-│   │   └── DashboardPage.jsx        # /dashboard — personal progress (trend charts + panels)
+│   │   ├── DashboardPage.jsx        # /dashboard — personal progress (trend charts + panels)
+│   │   ├── HistoryPage.jsx          # /history — every past reading
+│   │   └── ReadingDetailsPage.jsx   # /history/:sessionId — one past reading's results
 │   │
 │   ├── components/
 │   │   ├── auth/
@@ -149,6 +151,8 @@ Defined in `src/App.jsx` using `<BrowserRouter>` + `<Routes>` / `<Route>` (React
 | `/session` | `SessionScreen` | `AuthGuard` — redirect to `/login` if unauthenticated |
 | `/results` | `SessionResultsPage` | `AuthGuard` — redirect to `/login`; redirect to `/session` if no result state |
 | `/dashboard` | `DashboardPage` | `AuthGuard` — redirect to `/login` |
+| `/history` | `HistoryPage` | `AuthGuard` — redirect to `/login`; every past reading, from the dashboard's "See all my readings" |
+| `/history/:sessionId` | `ReadingDetailsPage` | `AuthGuard` — redirect to `/login`; one past reading's full results (read-only) |
 | `/` and `*` | Redirect → `/login` | — |
 
 All pages are **eagerly imported** today — per-route `React.lazy()` + `<Suspense>` splitting is **not yet implemented** (only vendor chunk-splitting is configured in `vite.config.js`). The learner flow runs `/login → /pre-session → /quality-check → /session → /results`, with `/dashboard` reachable from the results page.

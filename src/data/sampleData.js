@@ -22,8 +22,10 @@ export const samplePassages = [
 ]
 
 // Same shape useSessionHistory returns: `sessions` rows, oldest → newest.
+// `id` is a placeholder until the backend returns real session ids (/history/:id).
 export const sampleSessions = [
   {
+    id: 'sample-session-1',
     learner_id: 'sample-learner',
     passage_id: samplePassages[0].id,
     session_timestamp: '2026-10-05T09:00:00.000Z',
@@ -44,6 +46,7 @@ export const sampleSessions = [
     inaudible_reading: false,
   },
   {
+    id: 'sample-session-2',
     learner_id: 'sample-learner',
     passage_id: samplePassages[1].id,
     session_timestamp: '2026-10-12T09:00:00.000Z',
@@ -64,6 +67,7 @@ export const sampleSessions = [
     inaudible_reading: false,
   },
   {
+    id: 'sample-session-3',
     learner_id: 'sample-learner',
     passage_id: samplePassages[0].id,
     session_timestamp: '2026-10-19T09:00:00.000Z',
@@ -84,6 +88,7 @@ export const sampleSessions = [
     inaudible_reading: false,
   },
   {
+    id: 'sample-session-4',
     learner_id: 'sample-learner',
     passage_id: samplePassages[1].id,
     session_timestamp: '2026-10-26T09:00:00.000Z',

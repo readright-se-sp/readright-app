@@ -19,6 +19,8 @@
  *                       session_timestamp ASC.
  *   loading   {boolean} True while the initial load is in-flight.
  *   error     {object|null} Set if the load fails.
+ *   retry     {Function} Re-runs the load (the dashboard's "Try again"); a
+ *                       no-op while the data is static.
  *
  * Session row shape — 19 fields matching AssessmentResultJSON in api.js:
  *   Core identifiers  : learner_id, passage_id, session_timestamp
@@ -40,10 +42,14 @@
  *   Blocks     : REA-33 · RR-049 (Dashboard Miscue + Behavioral History Charts)
  *                That ticket will consume this same hook to power the Miscue
  *                Patterns and Behavioral History sections. Do NOT alter the
- *                return shape { sessions, loading, error } or the query order.
+ *                return shape { sessions, loading, error } (retry was added
+ *                alongside) or the query order.
  */
 import { sampleSessions } from '../data/sampleData'
 
+// TODO(backend): make this re-run the backend call once it replaces the samples.
+const retry = () => {}
+
 export function useSessionHistory() {
-  return { sessions: sampleSessions, loading: false, error: null }
+  return { sessions: sampleSessions, loading: false, error: null, retry }
 }

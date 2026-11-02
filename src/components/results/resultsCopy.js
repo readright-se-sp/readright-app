@@ -8,10 +8,21 @@ export const GOAL_WPM = 80
 // Right end of the speed track.
 export const MAX_WPM = 150
 
+// Reading Aloud Score colours match the dashboard's level faces
+// (dashboard/dashboardCopy LEVEL_FACES). No red: Frustration uses amber.
 export const READING_LEVELS = {
-  Independent: { badge: 'bg-goal', message: 'You read the story all by yourself! You are ready for harder stories.' },
-  Instructional: { badge: 'bg-goal', message: 'You read most of the story well! Keep practicing to reach Independent.' },
-  Frustration: { badge: 'bg-brand', message: 'This story was a bit hard. Keep practicing — you’ll get there!' },
+  Independent: {
+    badge: 'bg-goal', ring: 'border-mint bg-mint-soft', ink: 'text-mint-ink',
+    message: 'You read the story all by yourself! You are ready for harder stories.',
+  },
+  Instructional: {
+    badge: 'bg-[#34508f]', ring: 'border-sky bg-sky-soft', ink: 'text-[#34508f]',
+    message: 'You read most of the story well! Keep practicing to reach Independent.',
+  },
+  Frustration: {
+    badge: 'bg-[#7d5400]', ring: 'border-amber bg-[#fdf3d8]', ink: 'text-[#7d5400]',
+    message: 'This story was a bit hard. Keep practicing — you’ll get there!',
+  },
 }
 
 // comprehension_level (1–3) → "Did you understand the story?" face + message.

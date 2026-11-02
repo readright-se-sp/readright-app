@@ -7,9 +7,9 @@ export function ReadingScoreCard({ score, readingLevel }) {
 
   return (
     <section className="flex items-center gap-4 rounded-[24px] border-[1.5px] border-[#f0d8d2] bg-white p-4">
-      <div className="flex size-[92px] flex-none flex-col items-center justify-center rounded-full border-[5px] border-coral bg-coral-soft">
-        <span className="text-[32px] font-black leading-none text-brand">{Math.round(score)}</span>
-        <span className="text-xs font-extrabold text-brand">out of 100</span>
+      <div className={`flex size-[92px] flex-none flex-col items-center justify-center rounded-full border-[5px] ${level.ring} ${level.ink}`}>
+        <span className="text-[32px] font-black leading-none">{Math.round(score)}</span>
+        <span className="text-xs font-extrabold">out of 100</span>
       </div>
       <div className="flex min-w-0 flex-col gap-1">
         <h2 className="text-[13px] font-black uppercase tracking-[0.06em] text-ink-soft">Reading Aloud Score</h2>
