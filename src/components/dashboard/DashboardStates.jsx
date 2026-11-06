@@ -13,7 +13,7 @@ export function DashboardEmpty() {
   return (
     <>
       <section className="flex flex-col items-center gap-3.5 px-3 pb-2 pt-5 text-center">
-        <img src="/mascot-reading.svg" alt="" className="w-32 motion-safe:animate-lumi-bob" />
+        <img src="/mascot-reading.svg" alt="" className="w-32 drop-shadow-[0_0_12px_rgb(255_218_140/0.75)] motion-safe:animate-lumi-bob" />
         <p className="max-w-[290px] text-[22px] font-black leading-tight text-balance">
           Read your first story to see your progress here!
         </p>

@@ -1,5 +1,5 @@
 const variants = {
-  primary: 'bg-brand text-white',
+  primary: 'bg-cta border-2 border-white shadow-cta text-white',
   secondary: 'bg-white text-brand border border-brand',
 }
 

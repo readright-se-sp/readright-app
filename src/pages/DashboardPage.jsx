@@ -121,7 +121,10 @@ export default function DashboardPage() {
         </header>
 
         <section className="flex items-center gap-4 px-1 pb-2 pt-4">
-          <img src="/mascot-reading.svg" alt="" className="w-[72px] shrink-0 motion-safe:animate-lumi-bob" />
+          {/* Lumi glows softly (a steady glow when motion is reduced). */}
+          <span className="shrink-0 drop-shadow-[0_0_10px_rgb(255_218_140/0.75)] motion-safe:animate-lumi-glow">
+            <img src="/mascot-reading.svg" alt="" className="w-[72px] motion-safe:animate-lumi-bob" />
+          </span>
           <div className="flex flex-col gap-1">
             <h1 className="text-[30px] font-black leading-[1.1]">{firstName ? `Hi, ${firstName}!` : 'Hi there!'}</h1>
             <p className="text-[17px] font-semibold text-ink-soft">
