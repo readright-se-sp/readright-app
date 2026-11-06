@@ -94,6 +94,7 @@ export function ComprehensionQuiz({ passage, grade, lang = 'en', onFinish, onExi
       lang={lang}
       tier={tier}
       onAnswer={answer}
+      onJump={goTo}
       onPrevious={() => (index === 0 ? setScreen('intro') : goTo(index - 1))}
       onNext={next}
       onExit={onExit}

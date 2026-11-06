@@ -25,14 +25,14 @@ export function ComprehensionCard({ level }) {
 
 /** A happy face with closed eyes and pink cheeks, filled with the level colour. */
 function Face({ fill, mouth }) {
-  const outline = 'var(--color-level-ink)'
+  const ink = 'var(--color-level-ink)'
   return (
     <svg viewBox="0 0 44 44" aria-hidden="true" className="size-[72px] flex-none">
-      <circle cx="22" cy="22" r="20" className={fill} stroke={outline} strokeWidth="2" />
-      <path d="M12.5 19.5Q15.5 15 18.5 19.5M25.5 19.5Q28.5 15 31.5 19.5" fill="none" stroke={outline} strokeWidth="2.4" strokeLinecap="round" />
+      <circle cx="22" cy="22" r="21" className={fill} />
+      <path d="M12.5 19.5Q15.5 15 18.5 19.5M25.5 19.5Q28.5 15 31.5 19.5" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />
       {mouth === 'grin'
-        ? <path d="M14 25Q22 35 30 25Z" fill={outline} />
-        : <path d="M15 26Q22 32 29 26" fill="none" stroke={outline} strokeWidth="2.4" strokeLinecap="round" />}
+        ? <path d="M14 25Q22 35 30 25Z" fill={ink} />
+        : <path d="M15 26Q22 32 29 26" fill="none" stroke={ink} strokeWidth="2.4" strokeLinecap="round" />}
       <ellipse cx="10.5" cy="26" rx="3" ry="2" fill="#ff9fb0" />
       <ellipse cx="33.5" cy="26" rx="3" ry="2" fill="#ff9fb0" />
     </svg>

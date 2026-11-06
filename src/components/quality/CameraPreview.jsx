@@ -1,5 +1,15 @@
 import { useEffect, useRef } from 'react'
 
+/** The blinking "Live" badge for the corner of a camera box. */
+export function LiveBadge() {
+  return (
+    <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-0.5 text-sm font-black text-white">
+      <span aria-hidden="true" className="size-2 rounded-full bg-coral motion-safe:animate-blink" />
+      Live
+    </span>
+  )
+}
+
 /**
  * CameraPreview — live, self-view (mirrored) camera feed for GO1.
  *
@@ -19,10 +29,14 @@ import { useEffect, useRef } from 'react'
  *
  * `className` (optional) overrides the default 4:3 card styling, e.g. to fill a
  * container that resizes into the recording bubble on /session.
+ *
+ * `onVideoRatio` (optional) reports the camera's width ÷ height, so a parent can
+ * size its box to match instead of cropping the picture.
  */
 export function CameraPreview({
   stream,
   onVideoNode,
+  onVideoRatio,
   className = 'w-full aspect-[4/3] rounded-[12px] object-cover -scale-x-100 bg-ink',
 }) {
   const videoRef = useRef(null)
@@ -31,6 +45,10 @@ export function CameraPreview({
   const setRef = (node) => {
     videoRef.current = node
     onVideoNode?.(node)
+  }
+
+  const reportRatio = ({ target: { videoWidth, videoHeight } }) => {
+    if (videoWidth && videoHeight) onVideoRatio?.(videoWidth / videoHeight)
   }
 
   useEffect(() => {
@@ -59,6 +77,8 @@ export function CameraPreview({
       muted
       playsInline
       aria-label="Camera preview"
+      onLoadedMetadata={reportRatio}
+      onResize={reportRatio}
       className={className}
     />
   )

@@ -1,15 +1,17 @@
 // QualityCheckScreen.jsx — "Get ready!" GO1 gate (/quality-check).
 // Live camera preview + the four quality checks as a 2×2 grid. Camera + mic
 // are turned on in /pre-session; this screen only re-acquires and checks.
-// Sticker style like /pre-session and /results: peach page, brown-outlined
-// cards with a ledge.
+// Sticker style like /dashboard: soft cards with a same-colour ledge, on the same
+// white sky card as /pre-session (SkyCardPage). The camera takes the spare height.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMediaStream } from '../hooks/useMediaStream'
 import { useQualityGate } from '../hooks/useQualityGate'
 import { detectPlatform } from '../utils/platform'
+import { LiveBadge } from '../components/quality/CameraPreview'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
-import { StickerExitButton } from '../components/ui/ExitButton'
+import { SkyCardPage } from '../components/ui/SkyCardPage'
+import { CAMERA_BOX, SKY_CARD_TALL, SOFT_PRIMARY } from '../components/ui/stickerStyles'
 import { LogoMark } from '../components/icons'
 
 // Per-check line icons (inherit the icon-circle's text color via currentColor).
@@ -51,15 +53,15 @@ const CHECK_ROWS = [
 
 // Status shown with color AND icon/text — never color alone (NFR-U1).
 const STATUS_STYLE = {
-  PASS: { card: 'bg-result-green', pill: 'bg-goal text-white', text: 'Good!' },
-  FAIL: { card: 'bg-result-pink', pill: 'bg-brand text-white', text: 'Fix me' },
-  CHECKING: { card: 'bg-shelf-card', pill: 'bg-cta text-level-ink', text: 'Checking…' },
+  PASS: { card: 'bg-result-green shadow-ledge-green', pill: 'bg-goal text-white', text: 'Good!' },
+  FAIL: { card: 'bg-result-pink shadow-ledge-pink', pill: 'bg-brand text-white', text: 'Fix me' },
+  CHECKING: { card: 'bg-shelf-card shadow-ledge-yellow', pill: 'bg-cta text-level-ink', text: 'Checking…' },
 }
 
 function StatusPill({ status }) {
   const { pill, text } = STATUS_STYLE[status]
   return (
-    <span className={`flex items-center gap-1 rounded-full border-2 border-level-tile-edge px-2.5 py-px text-sm font-black ${pill}`}>
+    <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-black ${pill}`}>
       {status === 'PASS' && (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m5 13 4 4L19 7" />
@@ -77,11 +79,11 @@ function StatusPill({ status }) {
 
 function CheckTile({ icon, label, status }) {
   return (
-    <div className={`flex flex-col items-center gap-1.5 rounded-[20px] border-[3px] border-level-tile-edge px-2 py-3 shadow-level-tile ${STATUS_STYLE[status].card}`}>
-      <span className="flex size-11 items-center justify-center rounded-full border-[3px] border-level-tile-edge bg-white text-level-ink">
+    <div className={`flex flex-col items-center justify-center gap-1 rounded-3xl px-1.5 py-1.5 tall:gap-1.5 tall:py-3 ${STATUS_STYLE[status].card}`}>
+      <span className="flex size-8 items-center justify-center rounded-full bg-white text-level-ink tall:size-10">
         {icon}
       </span>
-      <p className="text-center text-base font-black text-ink">{label}</p>
+      <p className="text-center text-base font-black leading-tight text-ink">{label}</p>
       <StatusPill status={status} />
     </div>
   )
@@ -96,6 +98,8 @@ export default function QualityCheckScreen() {
   // the same node lets the effect attach the stream by mutating the DOM element.
   const videoRef = useRef(null)
   const [videoEl, setVideoEl] = useState(null)
+  // The camera's real shape, so from sm: its box matches with no empty bands.
+  const [videoRatio, setVideoRatio] = useState(16 / 9)
   const setVideoNode = useCallback((node) => {
     videoRef.current = node
     setVideoEl(node)
@@ -127,11 +131,15 @@ export default function QualityCheckScreen() {
     return <PermissionDenied platform={platform} errorKind={errorKind} onRetry={retry} />
   }
 
+  function handleVideoSize({ target: { videoWidth, videoHeight } }) {
+    if (videoWidth && videoHeight) setVideoRatio(videoWidth / videoHeight)
+  }
+
   function handleRecord() {
     if (!allPassed) return
     // /pre-session already set rr_onboarding_seen, so re-reading it here would
     // always say "not first" — forward the value it captured instead.
-    navigate('/session', { state: { isFirstSession: location.state?.isFirstSession ?? false } })
+    navigate('/session', { state: { isFirstSession: location.state?.isFirstSession ?? false, passageGrade: location.state?.passageGrade } })
   }
 
   // Tip = the first failing check's own message (specific: e.g. "too loud" vs
@@ -142,82 +150,89 @@ export default function QualityCheckScreen() {
     : checks.mic.status === 'CHECKING'
       ? 'Say "Hi!" nice and loud'
       : null
+  // Always a line here, so the camera doesn't jump as the checks change.
+  const note = tip ?? (allPassed ? "You're all set!" : 'Looking good! Hold still…')
   const facePassed = checks.camera.status === 'PASS'
+  // A PASS can also mean face detection couldn't load, so this praises without
+  // claiming we saw the face; "good to go" waits for all four checks.
+  const faceLabel = !facePassed
+    ? 'Put your face in the circle'
+    : allPassed
+      ? "You're good to go!"
+      : 'Great! Stay right there'
 
   return (
-    <div className="min-h-dvh bg-level-card font-display text-ink sm:bg-divider sm:py-6">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-level-card px-4.5 pb-7 sm:min-h-0 sm:rounded-[32px] sm:border-[3px] sm:border-level-edge">
-        {/* Header: exit · logo (empty third column keeps the logo centred) */}
-        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-[max(1rem,env(safe-area-inset-top))]">
-          <StickerExitButton onClick={() => navigate('/dashboard')} />
-          <div className="flex items-center gap-1.5">
-            <span className="flex -translate-y-0.5"><LogoMark size={32} /></span>
-            <span className="text-xl font-black text-level-ink">ReadRight</span>
-          </div>
-          <span />
-        </header>
-
-        <h1 className="mt-3 text-center text-[32px] font-black leading-tight text-level-ink">Get ready!</h1>
-        <p className="mb-4 text-center text-[17px] font-bold text-coral-ink">
-          Let&apos;s check 4 quick things
-        </p>
-
-        {/* Camera preview + face guide */}
-        <div className="relative h-[250px] overflow-hidden rounded-3xl border-[3px] border-level-tile-edge bg-gradient-to-br from-[#4a3530] to-[#7a625b] shadow-level-tile">
-          {permissionStatus === 'granted' ? (
-            <video
-              ref={setVideoNode}
-              autoPlay
-              muted
-              playsInline
-              className="absolute inset-0 h-full w-full -scale-x-100 object-cover"
-            />
-          ) : (
-            <p className="flex h-full items-center justify-center text-base font-semibold text-white/80">
-              Getting your camera ready…
-            </p>
-          )}
-          {stream && (
-            <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-0.5 text-sm font-black text-white">
-              <span aria-hidden="true" className="size-2 rounded-full bg-coral" />
-              Live
-            </span>
-          )}
+    <SkyCardPage
+      title="Get ready!"
+      lumi={false}
+      onExit={() => navigate('/dashboard')}
+      className={SKY_CARD_TALL}
+    >
+      {/* Camera preview + face guide */}
+      {/* From sm: the box takes the camera's shape, as big as the spare height allows. */}
+      <div className="relative mt-3 min-h-[140px] flex-1 tall:mt-4">
+        <div className="absolute inset-0 flex items-center justify-center @container-size">
           <div
-            aria-hidden="true"
-            className={`pointer-events-none absolute left-1/2 top-[44%] h-[180px] w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 border-dashed ${
-              facePassed ? 'border-mint-light' : 'border-white/85'
-            }`}
-          />
-          <div className="absolute inset-x-3 bottom-3 flex justify-center">
-            <span className="rounded-full border-2 border-level-tile-edge bg-white px-3.5 py-1 text-sm font-black text-level-ink">
-              Put your face in the circle
-            </span>
+            style={{ '--video-ratio': videoRatio }}
+            className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#4a3530] to-[#7a625b] ${CAMERA_BOX}`}
+          >
+            {permissionStatus === 'granted' ? (
+              <video
+                ref={setVideoNode}
+                autoPlay
+                muted
+                playsInline
+                onLoadedMetadata={handleVideoSize}
+                onResize={handleVideoSize}
+                className="absolute inset-0 h-full w-full -scale-x-100 object-contain sm:object-cover"
+              />
+            ) : (
+              <p className="flex h-full items-center justify-center text-base font-semibold text-white/80">
+                Getting your camera ready…
+              </p>
+            )}
+            {stream && <LiveBadge />}
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute left-1/2 top-[44%] aspect-[7/9] h-[72%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 ${
+                facePassed ? 'border-solid border-score-green' : 'border-dashed border-white/85'
+              }`}
+            />
+            <div className="absolute inset-x-3 bottom-3 flex justify-center">
+              <span className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-sm font-black ${facePassed ? 'bg-goal text-white' : 'bg-white text-level-ink'}`}>
+                {facePassed && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="m5 13 4 4L19 7" />
+                  </svg>
+                )}
+                {faceLabel}
+              </span>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* GO1 checks — 2×2 grid */}
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          {CHECK_ROWS.map(({ key, label }) => (
-            <CheckTile key={key} icon={ICONS[key]} label={label} status={checks[key].status} />
-          ))}
+      {/* GO1 checks — 2×2 grid */}
+      <div className="mt-3.5 grid grid-cols-2 gap-2.5 tall:mt-5 tall:gap-3.5">
+        {CHECK_ROWS.map(({ key, label }) => (
+          <CheckTile key={key} icon={ICONS[key]} label={label} status={checks[key].status} />
+        ))}
+      </div>
+
+      <div className="mt-3.5 flex flex-col gap-3.5 tall:mt-5 tall:gap-5">
+        <div role="status" className="flex min-h-14 items-center gap-2.5 rounded-2xl bg-shelf-card px-3 py-1.5 shadow-ledge-yellow tall:py-2.5">
+          <LogoMark size={28} />
+          <p className="text-[15px] font-bold leading-tight text-level-ink">{note}</p>
         </div>
-
-        {tip && (
-          <div role="status" className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-dashed border-level-tile-edge bg-shelf-card px-3.5 py-3">
-            <LogoMark size={32} />
-            <p className="text-[15px] font-bold text-level-ink">{tip}</p>
-          </div>
-        )}
 
         <button
           type="button"
           onClick={handleRecord}
           disabled={!allPassed}
-          className={`mt-4 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] px-4 font-black ${
+          className={`min-h-14 gap-2.5 px-4 ${
             allPassed
-              ? 'border-level-tile-edge bg-level-pill text-xl text-white shadow-level-tile active:translate-y-1 active:shadow-none'
-              : 'cursor-not-allowed border-level-edge bg-sticker text-lg text-level-muted'
+              ? `${SOFT_PRIMARY} text-xl`
+              : 'flex w-full cursor-not-allowed items-center justify-center rounded-2xl border-[3px] border-cream-edge bg-cream-button text-lg font-black text-level-muted shadow-cream-button'
           }`}
         >
           {allPassed ? (
@@ -230,6 +245,6 @@ export default function QualityCheckScreen() {
           )}
         </button>
       </div>
-    </div>
+    </SkyCardPage>
   )
 }

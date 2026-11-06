@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { STICKER_PRIMARY, STICKER_SECONDARY } from '../ui/stickerStyles'
+import { SOFT_PRIMARY, SOFT_SECONDARY } from '../ui/stickerStyles'
 
 /**
  * LeaveSessionDialog — "Stop reading now?" confirmation, shown only when leaving
@@ -39,7 +39,7 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
         aria-labelledby="leave-title"
         aria-describedby="leave-desc"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-[400px] flex-col items-center rounded-[28px] border-[3px] border-level-tile-edge bg-level-card px-6 pb-6 pt-7 text-center font-display text-ink shadow-level-tile"
+        className="flex w-full max-w-[400px] flex-col items-center rounded-[28px] bg-white px-6 pb-6 pt-7 text-center font-display text-ink shadow-ledge-blue"
       >
         <span className="flex size-28 items-center justify-center rounded-full bg-level-blob">
           <img src="/mascot-reading.svg" alt="" className="h-auto w-[84px]" />
@@ -55,7 +55,7 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
           type="button"
           autoFocus
           onClick={onStay}
-          className={`${STICKER_PRIMARY} mt-6 min-h-14 px-4 text-xl`}
+          className={`${SOFT_PRIMARY} mt-6 min-h-14 px-4 text-xl`}
         >
           Keep going
         </button>
@@ -63,7 +63,7 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
           ref={leaveRef}
           type="button"
           onClick={onLeave}
-          className={`${STICKER_SECONDARY} mt-3.5 min-h-14 px-4 text-lg`}
+          className={`${SOFT_SECONDARY} mt-3.5 min-h-14 px-4 text-lg`}
         >
           Yes, stop
         </button>

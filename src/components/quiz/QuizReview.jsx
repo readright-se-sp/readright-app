@@ -1,9 +1,9 @@
 import { CheckIcon } from '../icons'
-import { STICKER_SECONDARY } from '../ui/stickerStyles'
+import { SKY_CARD_FIXED, SOFT_SECONDARY } from '../ui/stickerStyles'
 import { ArrowRight, QuizPage, QuizPrimaryButton } from './QuizParts'
 
 /**
- * 1j — "Check your answers". Blank questions are dashed yellow cards with a
+ * 1j — "Check your answers". Blank questions are yellow cards with a
  * "!" (a nudge, not an error); answered ones — including "I don't know" — stay
  * quiet but tappable to change. When something is blank, the main button
  * jumps to the first blank and "Submit anyway" stays available: no pop-up,
@@ -16,11 +16,12 @@ export function QuizReview({ questions, answers, onOpenQuestion, onSubmit, onExi
   const firstBlank = answers.findIndex((a) => a == null)
 
   return (
-    <QuizPage onExit={onExit}>
-      <h1 className="text-[30px] font-black leading-[1.2] text-level-ink">Check your answers</h1>
-      <p className="mt-1 text-[17px] font-bold leading-[1.4] text-coral-ink">Tap a question to go back to it.</p>
+    <QuizPage onExit={onExit} className={SKY_CARD_FIXED}>
+      <h1 className="-mt-2 flex min-h-12 items-center pl-14 text-[24px] font-black leading-tight text-level-ink">Check your answers</h1>
+      <p className="mt-1.5 text-center text-[17px] font-bold leading-[1.4] text-coral-ink">Tap a question to go back to it.</p>
 
-      <ul className="mt-5 flex flex-col gap-3.5">
+      {/* Scrolls inside the card, so the buttons stay in view however long the list is. */}
+      <ul className="mt-3 flex min-h-0 flex-1 flex-col gap-3 overflow-auto pb-1.5">
         {questions.map((q, i) => (
           <li key={q.id}>
             {answers[i] == null ? (
@@ -32,8 +33,7 @@ export function QuizReview({ questions, answers, onOpenQuestion, onSubmit, onExi
         ))}
       </ul>
 
-      {/* Buttons stay pinned to the bottom so they're reachable however long the list is. */}
-      <div className="sticky bottom-0 -mx-4.5 mt-auto bg-level-card px-4.5 pb-4 pt-5">
+      <div className="mt-2.5">
         {blankCount > 0 ? (
           <>
             <QuizPrimaryButton onClick={() => onOpenQuestion(firstBlank)} className="min-h-16 text-[21px]">
@@ -43,7 +43,7 @@ export function QuizReview({ questions, answers, onOpenQuestion, onSubmit, onExi
             <button
               type="button"
               onClick={onSubmit}
-              className={`${STICKER_SECONDARY} mt-3.5 min-h-14 px-4 text-lg`}
+              className={`${SOFT_SECONDARY} mt-3 min-h-14 px-4 text-lg`}
             >
               Submit anyway
             </button>
@@ -63,9 +63,9 @@ function BlankRow({ number, question, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-16 w-full items-center gap-3 rounded-2xl border-[3px] border-dashed border-level-tile-edge bg-shelf-card px-3.5 py-3 text-left text-level-ink active:translate-y-0.5"
+      className="flex min-h-16 w-full items-center gap-3 rounded-2xl bg-shelf-card px-3.5 py-3 text-left text-level-ink shadow-ledge-yellow active:translate-y-0.5 active:shadow-none"
     >
-      <span className="flex size-9 flex-none items-center justify-center rounded-full border-2 border-level-tile-edge bg-white text-[17px] font-black">
+      <span className="flex size-9 flex-none items-center justify-center rounded-full bg-white text-[17px] font-black">
         {number}
       </span>
       <span className="min-w-0 flex-1">
@@ -89,13 +89,13 @@ function AnsweredRow({ number, question, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-14 w-full items-center gap-3 rounded-2xl border-[3px] border-level-tile-edge bg-white px-3.5 py-2.5 text-left text-level-ink shadow-level-tile active:translate-y-1 active:shadow-none"
+      className="flex min-h-14 w-full items-center gap-3 rounded-2xl bg-sticker px-3.5 py-2.5 text-left text-level-ink shadow-cream-button active:translate-y-0.5 active:shadow-none"
     >
-      <span className="flex size-9 flex-none items-center justify-center rounded-full border-2 border-level-tile-edge bg-level-card text-[17px] font-black">
+      <span className="flex size-9 flex-none items-center justify-center rounded-full bg-white text-[17px] font-black">
         {number}
       </span>
       <span className="line-clamp-2 min-w-0 flex-1 text-base font-bold leading-[1.3]">{question}</span>
-      <span className="flex flex-none items-center gap-1 rounded-full border-2 border-level-tile-edge bg-result-green py-0.5 pl-1 pr-2.5 text-sm font-black text-goal">
+      <span className="flex flex-none items-center gap-1 rounded-full bg-result-green py-0.5 pl-1 pr-2.5 text-sm font-black text-goal">
         <span aria-hidden="true" className="flex size-5 items-center justify-center rounded-full bg-goal text-white [&>svg]:size-3">
           <CheckIcon />
         </span>

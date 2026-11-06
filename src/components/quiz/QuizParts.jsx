@@ -1,47 +1,38 @@
 import { StickerExitButton } from '../ui/ExitButton'
-import { StickerPage } from '../ui/StickerPage'
-import { STICKER_PRIMARY } from '../ui/stickerStyles'
+import { SkyCardPage } from '../ui/SkyCardPage'
+import { SOFT_PRIMARY } from '../ui/stickerStyles'
 
-// Shared building blocks for the comprehension quiz screens, in the reading
-// flow's sticker style: peach page, brown-outlined cards with a ledge.
+// Shared building blocks for the comprehension quiz screens, on the same white
+// sky card as the rest of the reading flow, with soft same-colour ledges.
+
+const EXIT_LABEL = 'Stop and go back to my dashboard'
 
 /**
- * Full-height peach page, mobile-first column.
- * `onExit` (optional) adds the ✕ in the top-left corner.
+ * The quiz's sky card. `onExit` (optional) adds the ✕ in the top-left corner,
+ * `circle` the soft circle at the top, and `className` adds to the card.
  */
-export function QuizPage({ children, onExit, className = '' }) {
+export function QuizPage({ children, onExit, circle = false, className = '' }) {
   return (
-    <StickerPage className={`pt-[max(1rem,env(safe-area-inset-top))] ${className}`}>
-      {onExit && (
-        <div className="mb-3 flex">
-          <QuizExitButton onClick={onExit} />
-        </div>
-      )}
+    <SkyCardPage lumi={false} circle={circle} onExit={onExit} exitLabel={EXIT_LABEL} className={className}>
       {children}
-    </StickerPage>
+    </SkyCardPage>
   )
 }
 
 /** The quiz's ✕ — asks before leaving (SessionScreen shows the dialog). */
 export function QuizExitButton({ onClick }) {
-  return <StickerExitButton onClick={onClick} label="Stop and go back to my dashboard" />
+  return <StickerExitButton soft onClick={onClick} label={EXIT_LABEL} />
 }
 
-/** Cream sticker card used by the intro and done screens. */
+/** A column filling the rest of the sky card. */
 export function QuizCard({ children, className = '' }) {
-  return (
-    <div
-      className={`flex flex-1 flex-col rounded-3xl border-[3px] border-level-tile-edge bg-sticker shadow-level-tile ${className}`}
-    >
-      {children}
-    </div>
-  )
+  return <div className={`flex flex-1 flex-col ${className}`}>{children}</div>
 }
 
-/** Big red sticker button that presses down. Pass its height and text size. */
+/** Big red button that presses down. Pass its height and text size. */
 export function QuizPrimaryButton({ children, onClick, className = '' }) {
   return (
-    <button type="button" onClick={onClick} className={`${STICKER_PRIMARY} gap-2.5 px-4 ${className}`}>
+    <button type="button" onClick={onClick} className={`${SOFT_PRIMARY} gap-2.5 px-4 ${className}`}>
       {children}
     </button>
   )
