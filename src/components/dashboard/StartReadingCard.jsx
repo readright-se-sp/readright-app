@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { StoryLevelPicker } from './StoryLevelPicker'
+import { STICKER_PRIMARY } from '../ui/stickerStyles'
 
 /**
  * The dashboard's main action: "Start Reading", with the story-level picker
@@ -10,24 +11,29 @@ export function StartReadingCard({ grade, suggestedGrade, onGradeChange, onStart
   const [picking, setPicking] = useState(false)
 
   return (
-    <section className="flex items-stretch gap-3">
+    <section className="@container flex items-stretch gap-3">
+      {/* Sticker-style button: label, coral chevron. */}
       <button
         type="button"
         onClick={() => setPicking(true)}
         aria-haspopup="dialog"
         aria-label={`Story level: Grade ${grade}. Tap to change.`}
-        className="flex min-h-[72px] w-28 shrink-0 flex-col items-start justify-center gap-0.5 rounded-[18px] border-2 border-card-border bg-[#fff9f6] px-3 py-2 text-left shadow-card"
+        className="flex min-h-[72px] shrink-0 items-center gap-2 rounded-[18px] border-[3px] border-level-edge bg-level-card px-2.5 text-left shadow-level-card active:translate-y-1 active:shadow-none @[24rem]:gap-2.5 @[24rem]:px-3"
       >
-        <span className="text-sm font-extrabold text-ink-muted">Story level</span>
-        <span className="flex items-center gap-1.5 whitespace-nowrap text-[19px] font-black">
-          Grade {grade}
-          <span aria-hidden="true" className="size-0 border-x-[6px] border-t-[7px] border-x-transparent border-t-brand" />
+        <span className="flex flex-col">
+          <span className="text-sm font-extrabold text-level-muted">Story level</span>
+          <span className="whitespace-nowrap text-[19px] font-black leading-tight text-level-ink">Grade {grade}</span>
+        </span>
+        <span aria-hidden="true" className="flex size-7 shrink-0 items-center justify-center rounded-full bg-level-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 9 6 6 6-6" />
+          </svg>
         </span>
       </button>
       <button
         type="button"
         onClick={onStart}
-        className="flex min-h-[72px] min-w-0 flex-1 items-center justify-center gap-2.5 whitespace-nowrap rounded-[18px] bg-brand text-xl font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-none"
+        className={`${STICKER_PRIMARY} min-h-[72px] min-w-0 flex-1 gap-2.5 whitespace-nowrap rounded-[18px] px-3 text-xl`}
       >
         <span aria-hidden="true" className="size-0 shrink-0 border-y-[10px] border-l-[16px] border-y-transparent border-l-white" />
         Start Reading

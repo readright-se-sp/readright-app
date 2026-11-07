@@ -2,16 +2,23 @@
  * HistoryPage  —  /history route
  *
  * "Past readings" — every past reading, grouped by story grade (highest
- * first) and newest first inside each group. Grade chips filter the list;
- * each card's "See results" opens that reading's full results
+ * first) and newest first inside each group, each under a "Grade N stories"
+ * heading. Grade chips filter the list (only when there are 2+ grades);
+ * each book tile opens that reading's full results
  * (/history/:sessionId → ReadingDetailsPage). Opened from
  * the dashboard's "Past readings" card ("See all my readings"); the back
  * button returns to /dashboard.
  *
+ * Looks like the dashboard: pond background, frosted sticky navbar (here a
+ * sub-page bar: back button + title + profile menu), Lumi intro, and the
+ * "My shelf" book tiles (history/ReadingCard), and the same sticky
+ * Start Reading bar (dashboard/StartReadingBar) at the bottom.
+ *
  * ── States ───────────────────────────────────────────────────────────────
  *
- *  Loading  "Getting your readings…" while useSessionHistory loads.
- *  Empty    No readings yet → Start Reading (same entry as the dashboard).
+ *  Start Reading is always shown (sticky), so a reading is one tap away in every state.
+ *  Loading  "Getting your readings…" + placeholder tiles while useSessionHistory loads.
+ *  Empty    No readings yet → points to Start Reading below.
  *  Error    "Try again" re-runs the load (retry).
  *
  *  Dev preview (npm run dev only): /history?sample, ?sample=basic|empty|loading|error
@@ -29,8 +36,12 @@ import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useSessionHistory } from '../hooks/useSessionHistory'
 import { sampleDashboard } from '../data/sampleDashboard'
+import { PondBackground } from '../components/ui/PondBackground'
+import { GlassLayer } from '../components/ui/GlassLayer'
+import { StartReadingBar } from '../components/dashboard/StartReadingBar'
 import { GradeChips } from '../components/history/GradeChips'
 import { ReadingCard } from '../components/history/ReadingCard'
+import ProfileMenu from '../components/layout/ProfileMenu'
 
 /**
  * Newest-first rows grouped by story grade, highest grade first. Readings
@@ -61,34 +72,46 @@ export default function HistoryPage() {
   const sample = import.meta.env.DEV && params.has('sample') ? sampleDashboard(params.get('sample')) : null
   const { sessions, loading, error } = sample ?? history
   const ready = !error && !loading
+  const isEmpty = ready && sessions.length === 0
 
   const groups = groupByGrade(sessions)
   const graded = groups.filter((g) => g.grade != null)
   const shown = filter === 'all' ? groups : groups.filter((g) => g.grade === filter)
 
   return (
-    <div className="min-h-dvh bg-[#f3e4e0] font-display text-ink sm:py-6">
-      <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-4 bg-[#fff9f6] px-4 pb-8 pt-4 sm:min-h-0 sm:rounded-[32px] sm:border-2 sm:border-[#e3c3bb]">
-        <header className="flex items-center gap-3.5">
+    <div className="relative min-h-dvh font-display text-ink sm:py-6">
+      {/* Pond fixed to the screen; the tiles scroll over it. */}
+      <PondBackground />
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-4 px-4 pb-8 pt-3 sm:min-h-[calc(100dvh-3rem)]">
+        {/* Sticky navbar, same glass as the dashboard's: bleeds past the
+            column's px-4/pt-3 so content scrolls under it. A sub-page bar —
+            back button + page title + profile menu, no logo (the logo is the
+            dashboard's, the home screen). */}
+        <header className="sticky top-0 z-10 -mx-4 -mt-3 flex min-h-12 items-center gap-3 px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-[0_6px_12px_-8px_rgba(40,80,120,0.25)] sm:rounded-2xl">
+          <GlassLayer className="border-b bg-white/85 sm:rounded-2xl sm:border" />
           <button
             type="button"
             onClick={() => navigate(`/dashboard${sample ? search : ''}`)}
-            aria-label="Go back to my dashboard"
-            className="flex size-14 shrink-0 items-center justify-center rounded-full border-2 border-card-border bg-card text-brand shadow-card active:translate-y-1 active:shadow-none"
+            aria-label="Go back"
+            className="flex size-12 shrink-0 items-center justify-center rounded-full border-[3px] border-cream-edge bg-cream-button text-level-ink shadow-cream-button active:translate-y-0.5 active:shadow-none"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="m15 18-6-6 6-6" />
             </svg>
           </button>
-          <div className="flex flex-col">
-            <h1 className="text-[28px] font-black leading-tight">Past readings</h1>
-            {ready && (
-              <p className="text-lg font-semibold text-ink-soft">
-                {sessions.length} {sessions.length === 1 ? 'story' : 'stories'} read
-              </p>
-            )}
-          </div>
+          <h1 className="min-w-0 flex-1 truncate text-[22px] font-black leading-tight">Past readings</h1>
+          {/* Same profile menu as the dashboard, so Sign out is one tap away here too. */}
+          <ProfileMenu />
         </header>
+
+        <section className="flex items-center gap-4 px-1 pb-2 pt-4">
+          <img src="/mascot-reading.svg" alt="" className="w-[72px] shrink-0 motion-safe:animate-lumi-bob" />
+          {ready && sessions.length > 0 ? (
+            <p className="text-[22px] font-black leading-tight text-ink">Pick a story and I’ll show you how you did!</p>
+          ) : (
+            <p className="text-[19px] font-bold leading-snug text-ink-soft">All the stories you read will show up here.</p>
+          )}
+        </section>
 
         {error && (
           <section
@@ -110,31 +133,21 @@ export default function HistoryPage() {
           </section>
         )}
 
-        {!error && loading && (
-          <p className="text-base font-bold text-ink-muted" aria-live="polite">
-            Getting your readings…
-          </p>
-        )}
+        {!error && loading && <HistoryLoading />}
 
-        {ready && sessions.length === 0 && (
-          <section className="flex flex-col items-center gap-3.5 px-3 pt-8 text-center">
-            <img src="/mascot-reading.svg" alt="" className="w-32 motion-safe:animate-lumi-bob" />
-            <p className="max-w-[290px] text-[22px] font-black leading-tight text-balance">No readings yet!</p>
-            <p className="max-w-[300px] text-[17px] text-ink-soft">Read your first story and it will show up here.</p>
-            <button
-              type="button"
-              onClick={() => navigate('/pre-session')}
-              className="mt-2 flex min-h-[60px] items-center justify-center gap-2.5 rounded-[18px] bg-brand px-8 text-xl font-black text-white shadow-[0_4px_0_#7a1f1b] active:translate-y-1 active:shadow-none"
-            >
-              <span aria-hidden="true" className="size-0 shrink-0 border-y-[10px] border-l-[16px] border-y-transparent border-l-white" />
-              Start Reading
-            </button>
+        {isEmpty && (
+          <section className="flex flex-col items-center gap-3.5 rounded-3xl border-[3px] border-shelf-edge bg-shelf-card px-5 py-7 text-center shadow-shelf-card">
+            <p className="max-w-[290px] text-[22px] font-black leading-tight text-balance text-level-ink">No readings yet!</p>
+            <p className="max-w-[300px] text-[17px] text-level-muted">
+              Tap Start Reading below to read your first story.
+            </p>
           </section>
         )}
 
         {ready && sessions.length > 0 && (
           <>
-            {graded.length > 0 && (
+            {/* Nothing to filter with a single grade, but its heading still shows. */}
+            {graded.length > 1 && (
               <GradeChips
                 total={sessions.length}
                 grades={graded.map((g) => ({ grade: g.grade, count: g.rows.length }))}
@@ -143,16 +156,18 @@ export default function HistoryPage() {
               />
             )}
             {shown.map((group) => (
-              <section key={group.grade ?? 'none'} className="flex flex-col gap-3">
+              <section key={group.grade ?? 'none'} className="flex flex-col gap-3.5">
                 {graded.length > 0 && (
-                  <div className="flex items-baseline justify-between gap-2 pt-1">
+                  <div className="flex items-center gap-3 px-1 pt-2">
                     <h2 className="text-[22px] font-black leading-tight">
                       {group.grade != null ? `Grade ${group.grade} stories` : 'More stories'}
                     </h2>
-                    <span className="text-base font-bold text-ink-muted">{group.rows.length} read</span>
+                    <span className="-rotate-3 rounded-full bg-level-pill px-3 py-1 text-sm font-black text-white">
+                      {group.rows.length} read
+                    </span>
                   </div>
                 )}
-                <ul className="flex flex-col gap-3">
+                <ul className="flex flex-col gap-4">
                   {group.rows.map((s) => (
                     <ReadingCard
                       key={s.id ?? s.session_timestamp}
@@ -166,7 +181,34 @@ export default function HistoryPage() {
             ))}
           </>
         )}
+
+        {/* Same sticky Start Reading bar as the dashboard, in every state.
+            Must stay last in the column (see StartReadingBar). */}
+        <StartReadingBar />
       </div>
     </div>
+  )
+}
+
+/** Placeholder tiles the same shape as ReadingCard while the history loads. */
+function HistoryLoading() {
+  return (
+    <>
+      <p className="px-1 text-base font-bold text-ink-soft" aria-live="polite">
+        Getting your readings…
+      </p>
+      <ul className="flex flex-col gap-4 motion-safe:animate-pulse" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <li key={i} className="flex items-center gap-3 rounded-3xl border-[3px] border-[#e8cfc4] bg-[#fffaf0] py-3 pl-3.5 pr-2.5">
+            <span className="h-12 w-10 shrink-0 rounded-md bg-[#f3e2d6]" />
+            <span className="flex flex-1 flex-col gap-1.5">
+              <span className="h-6 w-14 rounded-lg bg-[#f3e2d6]" />
+              <span className="h-11.25 w-3/4 rounded-lg bg-[#f3e2d6]" />
+              <span className="h-8.5 w-32 rounded-full bg-[#f3e2d6]" />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
   )
 }

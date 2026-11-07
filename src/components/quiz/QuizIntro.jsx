@@ -4,27 +4,33 @@ import { ArrowRight, BookIcon, QuizCard, QuizPage, QuizPrimaryButton } from './Q
 export function QuizIntro({ storyTitle, onStart, onExit }) {
   return (
     <QuizPage onExit={onExit}>
-      <QuizCard className="items-center px-6.5 pb-8 pt-9 text-center">
-        <img src="/mascot-reading.svg" alt="" className="h-auto w-[132px]" />
-        <p className="mt-5.5 text-[13px] font-extrabold tracking-[0.12em] text-ink-soft">GREAT READING!</p>
-        <h1 className="mt-2 text-[30px] font-black leading-[1.2] text-pretty">
+      <QuizCard className="items-center px-5.5 pb-6 pt-7 text-center">
+        <span className="flex size-[150px] items-center justify-center rounded-full bg-level-blob">
+          <img src="/mascot-reading.svg" alt="" className="h-auto w-[116px] motion-safe:animate-lumi-bob" />
+        </span>
+        <p className="mt-4 rounded-full bg-level-pill px-3 py-0.5 text-sm font-black uppercase tracking-[0.06em] text-white">
+          Great reading!
+        </p>
+        <h1 className="mt-3 text-[28px] font-black leading-[1.2] text-level-ink text-pretty">
           Now let’s answer some questions about the story
         </h1>
 
-        <div className="mt-7 flex w-full flex-col gap-2 text-left">
-          <p className="text-[13px] font-extrabold tracking-[0.12em]">THE STORY</p>
-          <div className="flex items-center gap-3 rounded-[14px] border-2 border-card-border bg-white p-4 text-brand">
-            <BookIcon size={26} />
-            <span className="text-[21px] font-extrabold text-ink">{storyTitle}</span>
-          </div>
+        <div className="mt-6 flex w-full items-center gap-3 rounded-2xl border-[3px] border-level-tile-edge bg-result-blue px-4 py-3.5 text-left">
+          <span className="flex size-11 flex-none items-center justify-center rounded-full border-[3px] border-level-tile-edge bg-white text-tile-blue-ink">
+            <BookIcon size={22} />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-sm font-black uppercase tracking-[0.06em] text-tile-blue-ink">The story</span>
+            <span className="block text-[20px] font-black leading-tight text-level-ink">{storyTitle}</span>
+          </span>
         </div>
 
-        <p className="mt-4.5 text-[17px] leading-[1.45] text-ink-soft text-pretty">
+        <p className="mt-4.5 text-[17px] font-bold leading-[1.45] text-level-muted text-pretty">
           Answer each question as best you can. Take your time — there’s no rush.
         </p>
 
         <div className="min-h-6 flex-1" />
-        <QuizPrimaryButton onClick={onStart} className="h-16 text-[22px] font-extrabold">
+        <QuizPrimaryButton onClick={onStart} className="min-h-16 text-[22px]">
           Let’s Start
           <ArrowRight />
         </QuizPrimaryButton>

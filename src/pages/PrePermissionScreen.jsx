@@ -3,14 +3,43 @@
 // the learner turns the devices on; /quality-check only runs the GO1 checks.
 // Permission state comes from useMediaStream, so the native prompt still only
 // fires after the learner taps (explanation-before-prompt).
-import { useLocation, useNavigate } from 'react-router-dom'
-import { useMediaStream } from '../hooks/useMediaStream'
-import ExitButton from '../components/ui/ExitButton'
 
+// Sticker style like /results: peach page, brown-outlined cards with a ledge.
+
+import { useLocation, useNavigate } from 'react-router-dom'
+
+import { useMediaStream } from '../hooks/useMediaStream'
+import { StickerExitButton } from '../components/ui/ExitButton'
+import { Star } from '../components/dashboard/DashboardParts'
+
+const MicIcon = (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+    <rect x="9" y="3" width="6" height="11" rx="3" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+  </svg>
+)
+
+const CameraIcon = (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" aria-hidden="true">
+    <rect x="2.5" y="6.5" width="13" height="11" rx="2.5" />
+    <path d="m15.5 10.5 6-3.5v10l-6-3.5z" />
+  </svg>
+)
+
+const StarIcon = (
+  <span aria-hidden="true" className="relative size-7">
+    <Star className="inset-0 size-7 text-cta drop-shadow-[0_2px_0_rgba(138,68,54,0.35)]" />
+  </span>
+)
+
+// Each step: its card fill, the numbered dot, the text colour and an icon.
 const STEPS = [
-  { n: 1, title: 'Read a story out loud', body: 'Our mic will listen to you', card: 'bg-peach', dot: 'bg-amber' },
-  { n: 2, title: 'Show us how you read', body: 'Our camera will watch', card: 'bg-sky-soft', dot: 'bg-sky' },
-  { n: 3, title: 'See how you did!', body: "We'll show your results", card: 'bg-coral-soft', dot: 'bg-coral' },
+  { n: 1, title: 'Read a story out loud', body: 'Our mic will listen to you', icon: MicIcon,
+    card: 'bg-shelf-card', dot: 'bg-cta text-level-ink', ink: 'text-result-olive' },
+  { n: 2, title: 'Show us how you read', body: 'Our camera will watch', icon: CameraIcon,
+    card: 'bg-result-blue', dot: 'bg-tile-blue text-white', ink: 'text-tile-blue-ink' },
+  { n: 3, title: 'See how you did!', body: "We'll show your results", icon: StarIcon,
+    card: 'bg-result-pink', dot: 'bg-coral text-white', ink: 'text-level-ink' },
 ]
 
 // Plain-language recovery copy, keyed by useMediaStream's errorKind.
@@ -22,12 +51,12 @@ const DENIED_HELP = {
 }
 
 const primaryButton =
-  'flex min-h-[44px] w-full items-center justify-center rounded-full bg-brand py-4 text-[19px] font-extrabold text-white shadow-[0px_5px_0px_#7a1f1a] active:translate-y-1 active:shadow-[0px_1px_0px_#7a1f1a] disabled:opacity-60'
+  'flex min-h-14 w-full items-center justify-center rounded-2xl border-[3px] border-level-tile-edge bg-level-pill px-4 text-xl font-black text-white shadow-level-tile active:translate-y-1 active:shadow-none disabled:opacity-60'
 
 function OnPill({ children }) {
   return (
-    <span className="flex items-center gap-1.5 rounded-full bg-mint-soft px-3 py-1.5 text-sm font-extrabold text-mint-ink">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <span className="flex items-center gap-1.5 rounded-full border-2 border-level-tile-edge bg-result-green px-3 py-1 text-sm font-black text-goal">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m5 13 4 4L19 7" />
       </svg>
       {children}
@@ -51,40 +80,55 @@ export default function PrePermissionScreen() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-[#f3e6e3] px-4 py-6 font-display">
-      <div className="relative flex w-full max-w-[360px] flex-col items-center rounded-[28px] border-2 border-card-border bg-[#fffdfc] px-5 pt-7 pb-6 shadow-[0px_18px_40px_0px_rgba(120,60,50,0.12)]">
+    <div className="min-h-dvh bg-level-card font-display text-ink sm:bg-divider sm:py-6">
+      <div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col overflow-clip bg-level-card px-4.5 pb-7 sm:min-h-0 sm:rounded-[32px] sm:border-[3px] sm:border-level-edge">
+        {/* Big soft circle behind Lumi, with a few sparkles. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[260px]">
+          <span className="absolute -top-[170px] left-1/2 size-[400px] -translate-x-1/2 rounded-full bg-level-blob" />
+          <Star className="right-[13%] top-[64px] size-7 text-coral" />
+          <span className="absolute left-[22%] top-[150px] size-2.5 rounded-full bg-cta" />
+          <span className="absolute right-[22%] top-[150px] size-3 rounded-full bg-tile-blue" />
+        </div>
+
         {/* Always a way out — e.g. when the camera can't be turned on. */}
-        <ExitButton onClick={() => navigate('/dashboard')} className="absolute left-3 top-3" />
+        <header className="relative pt-[max(1rem,env(safe-area-inset-top))]">
+          <StickerExitButton onClick={() => navigate('/dashboard')} />
+        </header>
 
-        <img src="/mascot-reading.svg" alt="" className="h-[120px] w-auto" />
-        <h1 className="mt-1.5 text-[30px] font-black leading-tight text-ink">Before we start!</h1>
-        <p className="mt-1 text-base font-semibold text-ink-soft">Here&apos;s what will happen</p>
+        <div className="relative flex flex-col items-center text-center">
+          <img src="/mascot-reading.svg" alt="" className="-mt-4 h-[124px] w-auto motion-safe:animate-lumi-bob" />
+          <h1 className="mt-5 text-[32px] font-black leading-tight text-level-ink">Before we start!</h1>
+          <p className="mt-1 text-[17px] font-bold text-coral-ink">Here&apos;s what will happen</p>
+        </div>
 
-        <ol className="mt-5 flex w-full flex-col gap-3">
-          {STEPS.map(({ n, title, body, card, dot }) => (
-            <li key={n} className={`flex items-center gap-3.5 rounded-[18px] px-4 py-3.5 ${card}`}>
+        <ol className="relative mt-5 flex w-full flex-col gap-3.5">
+          {STEPS.map(({ n, title, body, icon, card, dot, ink }) => (
+            <li key={n} className={`flex items-center gap-3.5 rounded-[20px] border-[3px] border-level-tile-edge px-4 py-3.5 shadow-level-tile ${card} ${ink}`}>
               <span
                 aria-hidden="true"
-                className={`flex size-10 flex-none items-center justify-center rounded-full text-[20px] font-black text-white ${dot}`}
+                className={`flex size-10 flex-none items-center justify-center rounded-full border-[3px] border-level-tile-edge text-[20px] font-black ${dot}`}
               >
                 {n}
               </span>
-              <div>
-                <p className="text-[17px] font-extrabold text-ink">{title}</p>
-                <p className="text-base font-semibold text-ink-muted">{body}</p>
+              <div className="min-w-0 flex-1">
+                <p className="text-[17px] font-black leading-tight">{title}</p>
+                <p className="text-base font-bold">{body}</p>
               </div>
+              <span className="flex flex-none">{icon}</span>
             </li>
           ))}
         </ol>
 
-        <p className="mt-4 flex items-center gap-2 rounded-full border-2 border-dashed border-card-border px-3.5 py-2 text-sm font-bold text-ink-muted">
-          <span aria-hidden="true" className="size-2 rounded-full bg-mint" />
+        <p className="mx-auto mt-5 flex items-center gap-2 rounded-full border-2 border-dashed border-goal bg-sticker px-3.5 py-2 text-sm font-bold text-goal">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M7 10V7a5 5 0 0 1 10 0v3h1a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zm2 0h6V7a3 3 0 0 0-6 0z" />
+          </svg>
           Your recording is never saved or shared
         </p>
 
         <div className="mt-5 w-full" aria-live="polite">
           {permissionStatus === 'checking' && (
-            <p className="py-4 text-center text-base font-semibold text-ink-muted">Getting ready…</p>
+            <p className="py-4 text-center text-base font-bold text-level-muted">Getting ready…</p>
           )}
 
           {permissionStatus === 'pending' && (
@@ -94,8 +138,8 @@ export default function PrePermissionScreen() {
           )}
 
           {permissionStatus === 'requesting' && (
-            <p className="rounded-[18px] bg-peach px-4 py-3.5 text-center text-base font-bold text-ink-soft">
-              Tap <b className="text-ink">Allow</b> when your device asks
+            <p className="rounded-2xl border-2 border-dashed border-level-tile-edge bg-sticker px-4 py-3.5 text-center text-base font-bold text-level-ink">
+              Tap <b className="font-black">Allow</b> when your device asks
             </p>
           )}
 
@@ -113,15 +157,15 @@ export default function PrePermissionScreen() {
 
           {permissionStatus === 'denied' && (
             <>
-              <div role="alert" className="flex gap-3 rounded-[18px] bg-coral-soft px-4 py-3.5 text-left">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 flex-none text-coral">
+              <div role="alert" className="flex gap-3 rounded-[20px] border-[3px] border-level-tile-edge bg-result-pink px-4 py-3.5 text-left">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 flex-none text-brand">
                   <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                   <line x1="12" y1="9" x2="12" y2="13" />
                   <line x1="12" y1="17" x2="12.01" y2="17" />
                 </svg>
                 <div>
-                  <p className="text-base font-extrabold text-ink">We need your camera &amp; mic to start</p>
-                  <p className="mt-0.5 text-base font-semibold text-ink-muted">
+                  <p className="text-base font-black text-ink">We need your camera &amp; mic to start</p>
+                  <p className="mt-0.5 text-base font-semibold text-ink-soft">
                     {DENIED_HELP[errorKind] ?? 'We could not turn them on. Tap Try again.'}
                   </p>
                 </div>
@@ -129,15 +173,17 @@ export default function PrePermissionScreen() {
               <button type="button" onClick={retry} className={`mt-3.5 ${primaryButton}`}>
                 Try again
               </button>
-              <button
-                type="button"
-                onClick={() => navigate('/dashboard')}
-                className="mt-2 flex min-h-[44px] w-full items-center justify-center text-base font-extrabold text-brand"
-              >
-                Back to my dashboard
-              </button>
             </>
           )}
+
+          {/* Always offered, so the learner can leave without starting. */}
+          <button
+            type="button"
+            onClick={() => navigate('/dashboard')}
+            className="mt-3 flex min-h-14 w-full items-center justify-center rounded-2xl border-[3px] border-level-tile-edge px-4 text-lg font-black text-level-ink active:bg-level-blob/40"
+          >
+            Back to my dashboard
+          </button>
         </div>
       </div>
     </div>

@@ -4,11 +4,12 @@ import Avatar from '../ui/Avatar'
 import { useCurrentUser } from '../../hooks/useCurrentUser'
 import { useAuthContext } from '../../context/AuthContext'
 import { useOnClickOutside } from '../../hooks/useOnClickOutside'
+import { SignOutDialog } from './SignOutDialog'
 
 /**
  * ProfileMenu — the header profile icon (avatar) as a tap target that opens a
- * small dropdown with the learner's name + a Sign out action. Two deliberate
- * taps (open → Sign out) so a learner can't sign out by accident.
+ * small dropdown with the learner's name + a Sign out action. Sign out then
+ * asks to confirm (SignOutDialog), so a learner can't sign out by accident.
  *
  * Signing out clears the persisted Supabase session; AuthGuard would redirect
  * on its own, but we navigate to /login explicitly so it's immediate.
@@ -18,12 +19,19 @@ export default function ProfileMenu() {
   const { signOut } = useAuthContext()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [confirming, setConfirming] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const ref = useRef(null)
   useOnClickOutside(ref, () => setOpen(false), open)
 
-  async function handleSignOut() {
-    await signOut()
+  function askToSignOut() {
     setOpen(false)
+    setConfirming(true)
+  }
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    await signOut()
     navigate('/login', { replace: true })
   }
 
@@ -54,7 +62,7 @@ export default function ProfileMenu() {
           <button
             type="button"
             role="menuitem"
-            onClick={handleSignOut}
+            onClick={askToSignOut}
             className="flex min-h-[44px] w-full items-center gap-2 px-4 py-3 text-left text-[15px] font-bold text-brand active:bg-black/5"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -65,6 +73,10 @@ export default function ProfileMenu() {
             Sign out
           </button>
         </div>
+      )}
+
+      {confirming && (
+        <SignOutDialog onStay={() => setConfirming(false)} onSignOut={handleSignOut} signingOut={signingOut} />
       )}
     </div>
   )

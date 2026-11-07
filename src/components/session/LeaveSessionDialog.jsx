@@ -1,4 +1,5 @@
 import { useRef } from 'react'
+import { STICKER_PRIMARY, STICKER_SECONDARY } from '../ui/stickerStyles'
 
 /**
  * LeaveSessionDialog — "Stop reading now?" confirmation, shown only when leaving
@@ -38,13 +39,15 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
         aria-labelledby="leave-title"
         aria-describedby="leave-desc"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-[400px] flex-col items-center rounded-[28px] border-2 border-card-border bg-[#fffdfc] px-6 pb-6 pt-7 text-center font-display text-ink shadow-[0_18px_40px_rgba(120,60,50,0.25)]"
+        className="flex w-full max-w-[400px] flex-col items-center rounded-[28px] border-[3px] border-level-tile-edge bg-level-card px-6 pb-6 pt-7 text-center font-display text-ink shadow-level-tile"
       >
-        <img src="/mascot-reading.svg" alt="" className="h-auto w-[88px]" />
-        <h2 id="leave-title" className="mt-3 text-[24px] font-black leading-tight">
+        <span className="flex size-28 items-center justify-center rounded-full bg-level-blob">
+          <img src="/mascot-reading.svg" alt="" className="h-auto w-[84px]" />
+        </span>
+        <h2 id="leave-title" className="mt-3 text-[26px] font-black leading-tight text-level-ink">
           Stop reading now?
         </h2>
-        <p id="leave-desc" className="mt-2 text-[17px] leading-[1.45] text-ink-soft text-pretty">
+        <p id="leave-desc" className="mt-2 text-[17px] font-bold leading-[1.45] text-level-muted text-pretty">
           If you stop, your reading won’t be saved. You can start again from your dashboard.
         </p>
         <button
@@ -52,7 +55,7 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
           type="button"
           autoFocus
           onClick={onStay}
-          className="mt-6 flex min-h-[44px] w-full items-center justify-center rounded-full bg-brand py-4 text-[20px] font-extrabold text-white shadow-[0_5px_0_#871f1a] active:translate-y-1 active:shadow-[0_1px_0_#871f1a]"
+          className={`${STICKER_PRIMARY} mt-6 min-h-14 px-4 text-xl`}
         >
           Keep going
         </button>
@@ -60,7 +63,7 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
           ref={leaveRef}
           type="button"
           onClick={onLeave}
-          className="mt-3 flex min-h-[44px] w-full items-center justify-center rounded-full border-2 border-card-border bg-white py-3.5 text-[18px] font-extrabold text-brand"
+          className={`${STICKER_SECONDARY} mt-3.5 min-h-14 px-4 text-lg`}
         >
           Yes, stop
         </button>

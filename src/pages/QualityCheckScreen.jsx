@@ -1,13 +1,16 @@
 // QualityCheckScreen.jsx — "Get ready!" GO1 gate (/quality-check).
 // Live camera preview + the four quality checks as a 2×2 grid. Camera + mic
 // are turned on in /pre-session; this screen only re-acquires and checks.
+// Sticker style like /pre-session and /results: peach page, brown-outlined
+// cards with a ledge.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMediaStream } from '../hooks/useMediaStream'
 import { useQualityGate } from '../hooks/useQualityGate'
 import { detectPlatform } from '../utils/platform'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
-import ExitButton from '../components/ui/ExitButton'
+import { StickerExitButton } from '../components/ui/ExitButton'
+import { LogoMark } from '../components/icons'
 
 // Per-check line icons (inherit the icon-circle's text color via currentColor).
 const ICONS = {
@@ -48,22 +51,22 @@ const CHECK_ROWS = [
 
 // Status shown with color AND icon/text — never color alone (NFR-U1).
 const STATUS_STYLE = {
-  PASS: { card: 'bg-mint-soft', pill: 'bg-mint-ink text-white', text: 'Good!' },
-  FAIL: { card: 'bg-coral-soft', pill: 'bg-brand text-white', text: 'Fix me' },
-  CHECKING: { card: 'bg-peach', pill: 'bg-amber text-ink', text: 'Checking…' },
+  PASS: { card: 'bg-result-green', pill: 'bg-goal text-white', text: 'Good!' },
+  FAIL: { card: 'bg-result-pink', pill: 'bg-brand text-white', text: 'Fix me' },
+  CHECKING: { card: 'bg-shelf-card', pill: 'bg-cta text-level-ink', text: 'Checking…' },
 }
 
 function StatusPill({ status }) {
   const { pill, text } = STATUS_STYLE[status]
   return (
-    <span className={`flex items-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-extrabold ${pill}`}>
+    <span className={`flex items-center gap-1 rounded-full border-2 border-level-tile-edge px-2.5 py-px text-sm font-black ${pill}`}>
       {status === 'PASS' && (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m5 13 4 4L19 7" />
         </svg>
       )}
       {status === 'FAIL' && (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M18 6 6 18M6 6l12 12" />
         </svg>
       )}
@@ -74,11 +77,11 @@ function StatusPill({ status }) {
 
 function CheckTile({ icon, label, status }) {
   return (
-    <div className={`flex flex-col items-center gap-1.5 rounded-[18px] px-2 py-3 ${STATUS_STYLE[status].card}`}>
-      <span className="flex size-11 items-center justify-center rounded-full bg-[#fffdfc] text-ink-soft">
+    <div className={`flex flex-col items-center gap-1.5 rounded-[20px] border-[3px] border-level-tile-edge px-2 py-3 shadow-level-tile ${STATUS_STYLE[status].card}`}>
+      <span className="flex size-11 items-center justify-center rounded-full border-[3px] border-level-tile-edge bg-white text-level-ink">
         {icon}
       </span>
-      <p className="text-center text-[15px] font-extrabold text-ink">{label}</p>
+      <p className="text-center text-base font-black text-ink">{label}</p>
       <StatusPill status={status} />
     </div>
   )
@@ -147,25 +150,25 @@ export default function QualityCheckScreen() {
   const facePassed = checks.camera.status === 'PASS'
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-[#f3e6e3] px-4 py-6 font-display">
-      <div className="flex w-full max-w-[380px] flex-col rounded-[28px] border-2 border-card-border bg-[#fffdfc] px-4 pt-4 pb-5 shadow-[0px_18px_40px_0px_rgba(120,60,50,0.12)]">
-        {/* Header: exit · logo · spacer */}
-        <div className="flex items-center justify-between">
-          <ExitButton onClick={() => navigate('/dashboard')} className="bg-divider text-ink-soft" />
+    <div className="min-h-dvh bg-level-card font-display text-ink sm:bg-divider sm:py-6">
+      <div className="mx-auto flex min-h-dvh w-full max-w-[480px] flex-col bg-level-card px-4.5 pb-7 sm:min-h-0 sm:rounded-[32px] sm:border-[3px] sm:border-level-edge">
+        {/* Header: exit · logo (empty third column keeps the logo centred) */}
+        <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-[max(1rem,env(safe-area-inset-top))]">
+          <StickerExitButton onClick={() => navigate('/dashboard')} />
           <div className="flex items-center gap-1.5">
-            <img src="/mascot-reading.svg" alt="" className="size-[34px] object-contain" />
-            <span className="text-[18px] font-black text-brand">ReadRight</span>
+            <span className="flex -translate-y-0.5"><LogoMark size={32} /></span>
+            <span className="text-xl font-black text-level-ink">ReadRight</span>
           </div>
-          <div className="w-11" aria-hidden="true" />
-        </div>
+          <span />
+        </header>
 
-        <h1 className="mt-2.5 text-center text-[26px] font-black text-ink">Get ready!</h1>
-        <p className="mb-3.5 text-center text-base font-semibold text-ink-soft">
+        <h1 className="mt-3 text-center text-[32px] font-black leading-tight text-level-ink">Get ready!</h1>
+        <p className="mb-4 text-center text-[17px] font-bold text-coral-ink">
           Let&apos;s check 4 quick things
         </p>
 
         {/* Camera preview + face guide */}
-        <div className="relative h-[250px] overflow-hidden rounded-[24px] bg-gradient-to-br from-[#4a3530] to-[#7a625b]">
+        <div className="relative h-[250px] overflow-hidden rounded-3xl border-[3px] border-level-tile-edge bg-gradient-to-br from-[#4a3530] to-[#7a625b] shadow-level-tile">
           {permissionStatus === 'granted' ? (
             <video
               ref={setVideoNode}
@@ -179,6 +182,12 @@ export default function QualityCheckScreen() {
               Getting your camera ready…
             </p>
           )}
+          {stream && (
+            <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/45 px-2.5 py-0.5 text-sm font-black text-white">
+              <span aria-hidden="true" className="size-2 rounded-full bg-coral" />
+              Live
+            </span>
+          )}
           <div
             aria-hidden="true"
             className={`pointer-events-none absolute left-1/2 top-[44%] h-[180px] w-[140px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 border-dashed ${
@@ -186,28 +195,23 @@ export default function QualityCheckScreen() {
             }`}
           />
           <div className="absolute inset-x-3 bottom-3 flex justify-center">
-            <span className="rounded-full bg-[#fffdfc]/95 px-3.5 py-1.5 text-sm font-extrabold text-ink">
+            <span className="rounded-full border-2 border-level-tile-edge bg-white px-3.5 py-1 text-sm font-black text-level-ink">
               Put your face in the circle
             </span>
           </div>
         </div>
 
         {/* GO1 checks — 2×2 grid */}
-        <div className="mt-3.5 grid grid-cols-2 gap-2.5">
+        <div className="mt-4 grid grid-cols-2 gap-3">
           {CHECK_ROWS.map(({ key, label }) => (
             <CheckTile key={key} icon={ICONS[key]} label={label} status={checks[key].status} />
           ))}
         </div>
 
         {tip && (
-          <div role="status" className="mt-3 flex items-center gap-2.5 rounded-[18px] bg-peach px-3.5 py-3">
-            <span
-              aria-hidden="true"
-              className="flex size-7 flex-none items-center justify-center rounded-full bg-amber text-base font-black text-white"
-            >
-              !
-            </span>
-            <p className="text-[15px] font-bold text-ink">{tip}</p>
+          <div role="status" className="mt-4 flex items-center gap-3 rounded-2xl border-2 border-dashed border-level-tile-edge bg-shelf-card px-3.5 py-3">
+            <LogoMark size={32} />
+            <p className="text-[15px] font-bold text-level-ink">{tip}</p>
           </div>
         )}
 
@@ -215,10 +219,10 @@ export default function QualityCheckScreen() {
           type="button"
           onClick={handleRecord}
           disabled={!allPassed}
-          className={`mt-4 flex min-h-[44px] w-full items-center justify-center gap-2.5 rounded-full py-4 font-extrabold ${
+          className={`mt-4 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] px-4 font-black ${
             allPassed
-              ? 'bg-brand text-[20px] text-white shadow-[0px_5px_0px_#7a1f1a] active:translate-y-1 active:shadow-[0px_1px_0px_#7a1f1a]'
-              : 'cursor-not-allowed bg-[#e6d3ce] text-[18px] text-ink-muted'
+              ? 'border-level-tile-edge bg-level-pill text-xl text-white shadow-level-tile active:translate-y-1 active:shadow-none'
+              : 'cursor-not-allowed border-level-edge bg-sticker text-lg text-level-muted'
           }`}
         >
           {allPassed ? (

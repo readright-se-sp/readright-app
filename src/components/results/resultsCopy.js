@@ -5,50 +5,57 @@ import { miscueKeys } from '../../lib/philIri'
 
 // Words-per-minute goal shown on the speed track (Grade 4 Phil-IRI target).
 export const GOAL_WPM = 80
-// Right end of the speed track.
-export const MAX_WPM = 150
+// Right end of the speed track: the goal sits about ¾ along, and anyone
+// faster than this simply reaches the end.
+export const MAX_WPM = 110
 
-// Reading Aloud Score colours match the dashboard's level faces
-// (dashboard/dashboardCopy LEVEL_FACES). No red: Frustration uses amber.
+// Reading Aloud Score: the level pill, the text colour, and the bold gingham
+// card (`tile`) with its deep outline colour (`deep`) and ledges. `card` /
+// `ledge` are the softer pastel versions. Same green / blue / amber as the
+// dashboard's level faces (dashboardCopy LEVEL_FACES). No red: Frustration uses amber.
 export const READING_LEVELS = {
   Independent: {
-    badge: 'bg-goal', ring: 'border-mint bg-mint-soft', ink: 'text-mint-ink',
+    card: 'bg-result-green', ledge: 'shadow-ledge-green', badge: 'bg-goal', ink: 'text-goal',
+    tile: 'bg-score-green', deep: 'border-score-green-deep', tileLedge: 'shadow-[0_6px_0_var(--color-score-green-deep)]', stickerLedge: 'shadow-[0_4px_0_var(--color-score-green-deep)]',
     message: 'You read the story all by yourself! You are ready for harder stories.',
   },
   Instructional: {
-    badge: 'bg-[#34508f]', ring: 'border-sky bg-sky-soft', ink: 'text-[#34508f]',
+    card: 'bg-result-blue', ledge: 'shadow-ledge-blue', badge: 'bg-tile-blue', ink: 'text-tile-blue-ink',
+    tile: 'bg-tile-blue', deep: 'border-tile-blue-deep', tileLedge: 'shadow-tile-blue', stickerLedge: 'shadow-sticker-blue',
     message: 'You read most of the story well! Keep practicing to reach Independent.',
   },
   Frustration: {
-    badge: 'bg-[#7d5400]', ring: 'border-amber bg-[#fdf3d8]', ink: 'text-[#7d5400]',
+    card: 'bg-shelf-card', ledge: 'shadow-ledge-yellow', badge: 'bg-result-olive', ink: 'text-result-olive',
+    tile: 'bg-score-amber', deep: 'border-score-amber-deep', tileLedge: 'shadow-[0_6px_0_var(--color-score-amber-deep)]', stickerLedge: 'shadow-[0_4px_0_var(--color-score-amber-deep)]',
     message: 'This story was a bit hard. Keep practicing — you’ll get there!',
   },
 }
 
 // comprehension_level (1–3) → "Did you understand the story?" face + message.
+// `face` fills the face, `mouth` is 'smile' or 'grin'.
 export const COMPREHENSION = {
-  1: { title: 'Keep Going!', message: 'Let’s read it again together — you’ll understand even more!', card: 'bg-[#fff3dd]', ink: 'text-[#8a6410]' },
-  2: { title: 'Good Job!', message: 'You understood a lot of the story!', card: 'bg-sky-soft', ink: 'text-[#3e5ba8]' },
-  3: { title: 'Super Reader!', message: 'You understood the story really well!', card: 'bg-mint-soft', ink: 'text-mint-ink' },
+  1: { title: 'Keep Going!', message: 'Let’s read it again together — you’ll understand even more!', face: 'fill-track-yellow', mouth: 'smile', ink: 'text-result-olive' },
+  2: { title: 'Good Job!', message: 'You understood a lot of the story!', face: 'fill-result-face-blue', mouth: 'grin', ink: 'text-tile-blue-ink' },
+  3: { title: 'Super Reader!', message: 'You understood the story really well!', face: 'fill-result-face-green', mouth: 'grin', ink: 'text-goal' },
 }
 
 // "Word Detective" boxes, one per Phil-IRI miscue type. The keys and their order
 // come from lib/philIri.js (miscueKeys) — the same list the dashboard uses — so
 // the two can't drift apart. `said` / `fix` label the two halves of the
-// word-review sheet.
+// word-review sheet. `card` + `dot` colour the box; `border` + `ink` the sheet.
 const MISCUE_COPY = {
   mispronunciation: { name: 'Said it differently', desc: 'Words that sounded a bit off', said: 'You said', fix: 'Say it like this',
-    dot: 'bg-coral', card: 'bg-coral-soft', border: 'border-[#f6c4be]', ink: 'text-brand' },
+    dot: 'bg-coral', card: 'bg-word-pink', ledge: 'shadow-[0_5px_0_var(--color-word-pink-edge)]', edge: 'border-word-pink-edge', border: 'border-[#f6c4be]', ink: 'text-brand' },
   substitution: { name: 'Swapped words', desc: 'You read a different word', said: 'You read', fix: 'The story says',
-    dot: 'bg-amber', card: 'bg-[#fff3dd]', border: 'border-[#f3d58e]', ink: 'text-[#8a6410]' },
+    dot: 'bg-amber', card: 'bg-word-yellow', ledge: 'shadow-[0_5px_0_var(--color-word-yellow-edge)]', edge: 'border-word-yellow-edge', border: 'border-[#f3d58e]', ink: 'text-[#8a6410]' },
   omission: { name: 'Skipped words', desc: 'Words you jumped over', said: 'You skipped', fix: 'Read it with the word',
-    dot: 'bg-sky', card: 'bg-sky-soft', border: 'border-[#c6d3f4]', ink: 'text-[#3e5ba8]' },
+    dot: 'bg-tile-blue', card: 'bg-word-blue', ledge: 'shadow-[0_5px_0_var(--color-word-blue-edge)]', edge: 'border-word-blue-edge', border: 'border-[#c6d3f4]', ink: 'text-[#3e5ba8]' },
   insertion: { name: 'Added words', desc: 'Extra words not in the story', said: 'You added', fix: 'The story says',
-    dot: 'bg-lilac', card: 'bg-lilac-soft', border: 'border-[#d8cbf2]', ink: 'text-lilac-ink' },
+    dot: 'bg-lilac', card: 'bg-word-lilac', ledge: 'shadow-[0_5px_0_var(--color-word-lilac-edge)]', edge: 'border-word-lilac-edge', border: 'border-[#d8cbf2]', ink: 'text-lilac-ink' },
   repetition: { name: 'Said it twice', desc: 'Words you read again', said: 'You said', fix: 'Just say it once',
-    dot: 'bg-coral', card: 'bg-coral-soft', border: 'border-[#f6c4be]', ink: 'text-brand' },
+    dot: 'bg-tile-pink', card: 'bg-word-pink', ledge: 'shadow-[0_5px_0_var(--color-word-pink-edge)]', edge: 'border-word-pink-edge', border: 'border-[#f6c4be]', ink: 'text-brand' },
   refusal_to_pronounce: { name: 'Needed help', desc: 'Words you weren’t sure of', said: 'Tricky word', fix: 'Say it like this',
-    dot: 'bg-mint-ink', card: 'bg-mint-soft', border: 'border-[#b5dcc2]', ink: 'text-mint-ink' },
+    dot: 'bg-mint-ink', card: 'bg-word-green', ledge: 'shadow-[0_5px_0_var(--color-word-green-edge)]', edge: 'border-word-green-edge', border: 'border-[#b5dcc2]', ink: 'text-mint-ink' },
 }
 
 export const MISCUE_TYPES = miscueKeys.map((key) => ({ key, ...MISCUE_COPY[key] }))
