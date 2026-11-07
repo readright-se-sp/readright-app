@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useComprehensionQuiz } from '../../hooks/useComprehensionQuiz'
 import { sizeTierForGrade } from './quizLabels'
+import { QuizCard, QuizPage, QuizPrimaryButton } from './QuizParts'
 import { QuizIntro } from './QuizIntro'
 import { QuizQuestion } from './QuizQuestion'
 import { QuizReview } from './QuizReview'
@@ -17,10 +18,54 @@ import { QuizDone } from './QuizDone'
  *
  * `onFinish` receives one entry per question:
  *   { question_id, choice } where choice is the option index, 'idk' or null.
- * TODO(quiz answers): nothing stores these yet — the backend will decide where.
+ * SessionScreen posts these to the backend (v1 API).
+ *
+ * The questions may arrive after this opens, so QuizFlow only mounts once they
+ * are loaded: its answers array is sized from the questions when it mounts.
  */
-export function ComprehensionQuiz({ passage, grade, lang = 'en', onFinish, onExit }) {
-  const { questions } = useComprehensionQuiz(passage)
+export function ComprehensionQuiz({ sessionId, passage, grade, lang = 'en', onFinish, onExit }) {
+  const { questions, loading, error, retry } = useComprehensionQuiz(sessionId)
+
+  if (error) {
+    return (
+      <QuizPage onExit={onExit}>
+        <QuizCard className="items-center px-6.5 pb-8 pt-9 text-center">
+          <p role="alert" className="text-[19px] font-bold leading-[1.45] text-ink">
+            We couldn’t load your questions. Please check your internet, then tap Try Again.
+          </p>
+          <QuizPrimaryButton onClick={retry} className="mt-6 h-16 text-[22px] font-extrabold">
+            Try Again
+          </QuizPrimaryButton>
+        </QuizCard>
+      </QuizPage>
+    )
+  }
+
+  if (loading) {
+    return (
+      <QuizPage onExit={onExit}>
+        <QuizCard className="items-center px-6.5 pb-8 pt-9 text-center">
+          <p className="text-[19px] font-bold text-ink-soft" aria-live="polite">
+            Getting your questions ready…
+          </p>
+        </QuizCard>
+      </QuizPage>
+    )
+  }
+
+  return (
+    <QuizFlow
+      questions={questions}
+      passage={passage}
+      grade={grade}
+      lang={lang}
+      onFinish={onFinish}
+      onExit={onExit}
+    />
+  )
+}
+
+function QuizFlow({ questions, passage, grade, lang, onFinish, onExit }) {
   const [screen, setScreen] = useState('intro') // intro | question | review | done
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState(() => questions.map(() => null))

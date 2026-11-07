@@ -2,7 +2,8 @@
 // backend (e.g. while localhost is blocked by CORS). Everything is gated by
 // import.meta.env.DEV, so production builds never fake anything.
 //
-// Fake analysis — skip /analyze after "I'm done!" and finish with a sample result:
+// Fake analysis — run the v1 session flow against the stand-ins below: a sample
+// passage, sample questions, no upload, and a sample result at the end:
 //   ?fakeAnalysis        → 45s "analysis", then the sample result
 //   ?fakeAnalysis=20     → custom length in seconds
 //   ?fakeAnalysis=fail   → simulate a failed analysis
@@ -54,23 +55,60 @@ export function isDevSample(result) {
   return result?.dev_sample === true
 }
 
+// Fake session state, so the status endpoint can move on like the real one.
+let fakeAnalysisStartedAt = null
+let fakeQuizSubmitted = false
+
 /**
- * Stand-in for the /analyze call: waits, then resolves with the sample
- * "instructional" result (or rejects for 'fail'). Honours the abort signal so
- * useAnalyzeSubmit's timeout / unmount handling behaves normally.
+ * Stand-ins for the /v1/me/* calls in lib/api.js, with the same response shapes
+ * (store/api-endpoints.md). With 'fail', the analysis reports failed after 3s.
  */
-export async function fakeAnalyze(setting, signal) {
-  const { sampleResults } = await import('../data/sampleResults')
-  const fail = setting === 'fail'
-  const ms = fail ? 3000 : (Number(setting) || DEFAULT_SECONDS) * 1000
-  await new Promise((resolve, reject) => {
-    const t = setTimeout(resolve, ms)
-    signal?.addEventListener('abort', () => {
-      clearTimeout(t)
-      reject(new DOMException('Aborted', 'AbortError'))
-    })
-  })
-  if (fail) throw new Error('Fake analysis failure (dev)')
-  console.info('[ReadRight] Fake analysis (dev) — returning the sample result.')
-  return { ...sampleResults.instructional, dev_sample: true }
+export const fakeApi = {
+  async startSession() {
+    fakeAnalysisStartedAt = null
+    fakeQuizSubmitted = false
+    return {
+      session_id: 'dev-session',
+      status: 'assigned',
+      passage: {
+        id: 'dev-passage',
+        title: 'Lina’s Kite',
+        text: 'Lina ran up the hill with her new kite. Her dog, Bantay, ran after her. The kite rose high above the mango trees, and Lina smiled.',
+        wordCount: 26,
+      },
+    }
+  },
+
+  async getQuestions() {
+    const { sampleQuestions } = await import('../data/sampleQuestions')
+    return sampleQuestions
+  },
+
+  async uploadRecording() {
+    fakeAnalysisStartedAt = Date.now()
+    return { session_id: 'dev-session', status: 'processing' }
+  },
+
+  async submitComprehension() {
+    fakeQuizSubmitted = true
+    return { score_earned: 5, score_possible: 6, comprehension_level: 3 }
+  },
+
+  async getSessionStatus(setting) {
+    const fail = setting === 'fail'
+    const ms = fail ? 3000 : (Number(setting) || DEFAULT_SECONDS) * 1000
+    const finished = Date.now() - fakeAnalysisStartedAt >= ms
+    return {
+      session_id: 'dev-session',
+      status: 'processing',
+      analysis_status: !finished ? 'running' : fail ? 'failed' : 'completed',
+      comprehension_status: fakeQuizSubmitted ? 'submitted' : null,
+    }
+  },
+
+  async getResult() {
+    const { sampleResults } = await import('../data/sampleResults')
+    console.info('[ReadRight] Fake analysis (dev) — returning the sample result.')
+    return { ...sampleResults.instructional, dev_sample: true }
+  },
 }
