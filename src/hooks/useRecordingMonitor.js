@@ -17,7 +17,9 @@ import { useMicActivity } from './useMicActivity'
 
 // How long a check may stay FAIL before it stops the recording. Mic owns its own
 // 10s silence window inside useMicActivity, so its grace here is 0 (trip on FAIL).
-const GRACE_MS = { mic: 0, noise: 5000, lighting: 5000, camera: 5000 }
+// Camera gets longer because the story is covered after 2s (useStoryBlock), which
+// leaves the learner time to notice, read the note and move back.
+const GRACE_MS = { mic: 0, noise: 5000, lighting: 5000, camera: 8000 }
 // Cushion the video checks at the very start of a take so camera warm-up
 // (readyState) and MediaPipe (re)loading its WASM don't count as a real failure.
 const STARTUP_GRACE_MS = 1500

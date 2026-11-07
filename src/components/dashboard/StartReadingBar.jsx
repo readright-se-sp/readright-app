@@ -29,10 +29,9 @@ export function StartReadingBar() {
 
   // Entry point into a new reading: routes through the permission explainer
   // (/pre-session) → GO1 gate (/quality-check) → /session.
-  // TODO(passage grade): UI only — passageGrade is passed in route state but
-  // nothing reads it yet. To make it functional, forward it /pre-session →
-  // /quality-check → /session and filter usePassage by grade
-  // (needs a grade column on the `passages` table).
+  // TODO(passage grade): passageGrade reaches /session in route state, but only
+  // as the label on the ready card. To make it functional, filter usePassage by
+  // it (needs a grade column on the `passages` table).
   const startReading = () => navigate('/pre-session', { state: { passageGrade } })
 
   return (

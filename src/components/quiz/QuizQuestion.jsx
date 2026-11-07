@@ -1,6 +1,6 @@
 import { useReadAloud } from '../../hooks/useReadAloud'
 import { QUIZ_LABELS } from './quizLabels'
-import { LISTEN_BUTTON, LISTEN_PLAYING, STICKER_PRIMARY, STICKER_SECONDARY } from '../ui/stickerStyles'
+import { LISTEN_BUTTON, LISTEN_PLAYING, SKY_CARD_FIXED, SOFT_PRIMARY, SOFT_SECONDARY } from '../ui/stickerStyles'
 import { ArrowLeft, ArrowRight, QuizExitButton, QuizPage, SpeakerIcon } from './QuizParts'
 
 // Text/card sizes per grade tier (design states 1f Grade 1, 1b Grade 3, 1g Grade 6).
@@ -19,9 +19,10 @@ const LETTERS = 'abcd'
  * another question remounts it and the read-aloud hook cancels any speech.
  *
  * `answers` is the full array (one entry per question: option index, 'idk' or
- * null) so the progress boxes can show which questions are answered.
+ * null) so the progress boxes can show which questions are answered. Tapping a
+ * box calls `onJump` with its question's index.
  */
-export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md', onAnswer, onPrevious, onNext, onExit }) {
+export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md', onAnswer, onJump, onPrevious, onNext, onExit }) {
   const L = QUIZ_LABELS[lang] ?? QUIZ_LABELS.en
   const size = SIZES[tier] ?? SIZES.md
   const total = answers.length
@@ -40,29 +41,38 @@ export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md
   }
 
   return (
-    <QuizPage>
-      {/* ✕ + progress: one box per question, filled once answered (incl. "I don't know"). */}
-      <div className="flex items-center gap-3">
+    <QuizPage className={SKY_CARD_FIXED}>
+      {/* ✕ + progress: one box per question, filled once answered (incl. "I don't know").
+          Each is a tap target taller than its bar, which fits it to the 44px minimum. */}
+      <div className="-mt-2 flex items-center gap-1">
         <QuizExitButton
           onClick={() => {
             stop()
             onExit()
           }}
         />
-        <div className="flex flex-1 gap-1.5" aria-hidden="true">
+        <nav aria-label="Questions" className="flex flex-1">
           {answers.map((a, i) => (
-            <div
+            <button
               key={i}
-              className={`h-3.5 flex-1 rounded-full border-2 border-level-tile-edge ${a != null ? 'bg-level-pill' : 'bg-white'} ${
-                i === index ? 'ring-[3px] ring-cta ring-offset-1 ring-offset-level-card' : ''
-              }`}
-            />
+              type="button"
+              onClick={() => onJump(i)}
+              aria-label={`Go to question ${i + 1}`}
+              aria-current={i === index ? 'step' : undefined}
+              className="flex min-h-11 min-w-0 flex-1 items-center px-[3px] active:opacity-70"
+            >
+              <span
+                className={`h-3.5 w-full rounded-full ${a != null ? 'bg-score-amber' : 'bg-level-card'} ${
+                  i === index ? 'ring-[3px] ring-cta ring-offset-1 ring-offset-white' : ''
+                }`}
+              />
+            </button>
           ))}
-        </div>
+        </nav>
       </div>
 
-      <div className="mt-3.5 flex items-center justify-between gap-2.5">
-        <p className="flex-none whitespace-nowrap rounded-full border-2 border-level-tile-edge bg-white px-3 py-0.5 text-sm font-black tracking-[0.06em] text-level-ink">
+      <div className="mt-3 flex items-center justify-between gap-2.5">
+        <p className="flex-none whitespace-nowrap rounded-full bg-sticker px-3 py-0.5 text-sm font-black tracking-[0.06em] text-level-ink">
           {L.progress(index + 1, total)}
         </p>
         {supported &&
@@ -95,7 +105,7 @@ export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md
       </div>
 
       {/* pb-2 leaves room for the last card's ledge, which the scroll area would clip. */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-auto pt-4 pb-2">
+      <div className="flex min-h-0 flex-1 flex-col overflow-auto pb-2 pt-3">
         <h1 id={`q-${question.id}`} className={`${size.question} font-black leading-[1.3] text-level-ink text-pretty`}>
           {question.question}
         </h1>
@@ -115,9 +125,9 @@ export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md
           ))}
 
           <div className={`flex items-center gap-3 text-sm font-black text-level-muted ${size.or}`} aria-hidden="true">
-            <span className="flex-1 border-t-2 border-dashed border-level-edge" />
+            <span className="flex-1 border-t-2 border-dashed border-cream-edge" />
             {L.or}
-            <span className="flex-1 border-t-2 border-dashed border-level-edge" />
+            <span className="flex-1 border-t-2 border-dashed border-cream-edge" />
           </div>
 
           <button
@@ -129,7 +139,7 @@ export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md
           >
             <span
               aria-hidden="true"
-              className={`flex size-8 items-center justify-center rounded-full border-2 border-level-tile-edge text-[17px] font-black ${letterClass(selected === 'idk')}`}
+              className={`flex size-8 items-center justify-center rounded-full text-[17px] font-black ${letterClass(selected === 'idk')}`}
             >
               ?
             </span>
@@ -139,12 +149,12 @@ export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md
         </div>
       </div>
 
-      <div className="mt-4 flex gap-3">
-        <button type="button" onClick={onPrevious} className={`${STICKER_SECONDARY} min-h-[58px] flex-1 gap-1.5 px-2 text-[19px]`}>
+      <div className="mt-2.5 flex gap-3">
+        <button type="button" onClick={onPrevious} className={`${SOFT_SECONDARY} min-h-[58px] flex-1 gap-1.5 px-2 text-[19px]`}>
           <ArrowLeft size={20} />
           {L.previous}
         </button>
-        <button type="button" onClick={onNext} className={`${STICKER_PRIMARY} min-h-[58px] flex-[1.3] gap-1.5 px-2 text-[19px]`}>
+        <button type="button" onClick={onNext} className={`${SOFT_PRIMARY} min-h-[58px] flex-[1.3] gap-1.5 px-2 text-[19px]`}>
           {L.next}
           <ArrowRight size={20} />
         </button>
@@ -153,26 +163,25 @@ export function QuizQuestion({ question, index, answers, lang = 'en', tier = 'md
   )
 }
 
-// Chosen: pink card, red letter and a ✓ mark (never colour alone). Being read
-// aloud: dashed yellow card with a speaker.
+// Chosen: blue card, blue letter and a dot mark (never colour alone). Blue and a
+// dot say "picked" without hinting at right or wrong, as red or a ✓ would.
+// Being read aloud: yellow card with a speaker.
 function cardClass(selected, reading = false) {
-  const base = 'border-[3px] border-level-tile-edge text-level-ink active:translate-y-1 active:shadow-none'
-  if (selected) return `${base} bg-result-pink shadow-level-tile`
-  if (reading) return `${base} border-dashed bg-shelf-card shadow-level-tile`
-  return `${base} bg-white shadow-level-tile`
+  const base = 'text-level-ink active:translate-y-0.5 active:shadow-none'
+  if (selected) return `${base} bg-result-blue shadow-ledge-blue`
+  if (reading) return `${base} bg-shelf-card shadow-ledge-yellow`
+  return `${base} bg-sticker shadow-cream-button`
 }
 
 function letterClass(selected) {
-  return selected ? 'bg-level-pill text-white' : 'bg-level-card text-level-ink'
+  return selected ? 'bg-tile-blue text-white' : 'bg-cream-edge text-level-ink'
 }
 
-/** ✓ on the chosen answer, so the choice shows without relying on colour. */
+/** Radio dot on the chosen answer, so the choice shows without relying on colour. */
 function ChosenMark() {
   return (
-    <span aria-hidden="true" className="flex size-7 flex-none items-center justify-center rounded-full border-2 border-level-tile-edge bg-goal text-white">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="m5 13 4 4L19 7" />
-      </svg>
+    <span aria-hidden="true" className="flex size-7 flex-none items-center justify-center rounded-full border-[3px] border-tile-blue bg-white">
+      <span className="size-3 rounded-full bg-tile-blue" />
     </span>
   )
 }
@@ -188,7 +197,7 @@ function AnswerCard({ letter, text, selected, reading, sizeClass, letterClass: l
     >
       <span
         aria-hidden="true"
-        className={`flex flex-none items-center justify-center rounded-full border-2 border-level-tile-edge font-black ${letterSize} ${letterClass(selected)}`}
+        className={`flex flex-none items-center justify-center rounded-full font-black ${letterSize} ${letterClass(selected)}`}
       >
         {letter}
       </span>

@@ -12,6 +12,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800&display=swap');
 @import "tailwindcss";
 
+/* Screens with height to spare (roomier spacing on the pre-reading cards). */
+@custom-variant tall (@media (min-height: 760px));
+
 /*
  * Design tokens (Figma "Readright" design system).
  * Defined as Tailwind v4 @theme so they generate utilities:
@@ -64,6 +67,11 @@
   /* Login sky: light-blue gradient behind the card, with drifting clouds */
   --color-sky-top:     #8fd0f5;
   --color-sky-bottom:  #e3f4fd;
+  /* Forest along the bottom of the sky, far to near (/pre-session) */
+  --color-forest-far:    #a8dcae;
+  --color-forest-mid:    #6cc07a;
+  --color-forest-near:   #3f9e5f;
+  --color-forest-ground: #2f8550;
   /* Login text on the white sheet: navy title, blue text (≈7.6:1), soft blue icons/placeholders */
   --color-sky-deep:    #24366e;
   --color-sky-ink:     #34508f;
@@ -165,6 +173,10 @@
   --color-score-green-deep: #23753f;
   --color-score-amber:      #f2a93b;
   --color-score-amber-deep: #b5700f;
+  --color-score-bronze:     #875426; /* Frustration score ring, on the amber card (≈3:1) */
+  --color-score-bronze-shine: #d9a46e; /* metallic glints on that ring */
+  --color-score-silver:     #cdd5de; /* Instructional score ring, on the blue card (≈3:1) */
+  --color-score-silver-shine: #ffffff; /* metallic glints on that ring */
   /* Word Detective boxes: a step richer than the result-* pastels so they
      stand out from the peach page; *-edge is their outline + ledge. */
   --color-word-pink:        #ffd0cb;
@@ -195,6 +207,12 @@
     0%, 100% { transform: translateY(0) rotate(-2deg); }
     50%      { transform: translateY(-10px) rotate(2deg); }
   }
+  /* Dashboard: Lumi glows softly */
+  --animate-lumi-glow: lumi-glow 3s ease-in-out infinite;
+  @keyframes lumi-glow {
+    0%, 100% { filter: drop-shadow(0 0 6px rgb(255 218 140 / 0.55)); }
+    50%      { filter: drop-shadow(0 0 16px rgb(255 218 140 / 0.95)); }
+  }
   --animate-halo-ping: halo-ping 2s ease-out infinite;
   @keyframes halo-ping {
     0%   { transform: scale(0.85); opacity: 0.7; }
@@ -224,6 +242,18 @@
   }
 
   /* Dashboard tricky words: sound bars on the "Playing" button */
+  /* The story appearing as recording starts. */
+  --animate-fade-in: fade-in 0.45s ease-out both;
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+
+  /* The dot beside "Live" on the camera. */
+  --animate-blink: blink 1.2s ease-in-out infinite;
+  @keyframes blink {
+    50% { opacity: 0.15; }
+  }
+
   --animate-eq: eq 0.8s ease-in-out infinite;
   @keyframes eq {
     0%, 100% { transform: scaleY(0.35); }

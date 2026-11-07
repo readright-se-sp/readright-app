@@ -8,15 +8,15 @@
 export function RecordingStatus({ elapsed, problem }) {
   if (problem) {
     return (
-      <p role="status" className="flex-1 rounded-2xl border-2 border-dashed border-level-tile-edge bg-shelf-card px-3.5 py-2.5 text-[15px] font-bold text-level-ink">
+      <p role="status" className="flex-1 rounded-2xl bg-shelf-card px-3.5 py-2.5 text-[15px] font-bold text-level-ink shadow-ledge-yellow">
         {problem}
       </p>
     )
   }
 
   return (
-    <div role="status" className="flex items-center gap-2 rounded-full border-2 border-level-tile-edge bg-white px-3.5 py-1.5">
-      <span aria-hidden="true" className="size-2.5 animate-pulse rounded-full bg-coral" />
+    <div role="status" className="flex items-center gap-2 rounded-full bg-sticker px-3.5 py-1.5 shadow-cream-button">
+      <span aria-hidden="true" className="size-2.5 rounded-full bg-coral motion-safe:animate-blink" />
       <span className="text-[15px] font-black text-level-ink">Recording</span>
       <span className="text-[15px] font-bold tabular-nums text-level-muted">{elapsed}</span>
     </div>

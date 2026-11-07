@@ -11,22 +11,24 @@ export const MAX_WPM = 110
 
 // Reading Aloud Score: the level pill, the text colour, and the bold gingham
 // card (`tile`) with its deep outline colour (`deep`) and ledges. `card` /
-// `ledge` are the softer pastel versions. Same green / blue / amber as the
-// dashboard's level faces (dashboardCopy LEVEL_FACES). No red: Frustration uses amber.
+// `ledge` are the softer pastel versions. `ring` circles the score (an
+// Independent score has the gold one instead) and `scoreFace` colours the
+// circle inside it. Same green / blue / amber as the dashboard's level faces
+// (dashboardCopy LEVEL_FACES). No red: Frustration uses amber.
 export const READING_LEVELS = {
   Independent: {
     card: 'bg-result-green', ledge: 'shadow-ledge-green', badge: 'bg-goal', ink: 'text-goal',
-    tile: 'bg-score-green', deep: 'border-score-green-deep', tileLedge: 'shadow-[0_6px_0_var(--color-score-green-deep)]', stickerLedge: 'shadow-[0_4px_0_var(--color-score-green-deep)]',
+    tile: 'bg-score-green', deep: 'border-score-green-deep', tileLedge: 'shadow-[0_6px_0_var(--color-score-green-deep)]', stickerLedge: 'shadow-[0_4px_0_var(--color-score-green-deep)]', scoreFace: 'bg-sticker text-goal',
     message: 'You read the story all by yourself! You are ready for harder stories.',
   },
   Instructional: {
     card: 'bg-result-blue', ledge: 'shadow-ledge-blue', badge: 'bg-tile-blue', ink: 'text-tile-blue-ink',
-    tile: 'bg-tile-blue', deep: 'border-tile-blue-deep', tileLedge: 'shadow-tile-blue', stickerLedge: 'shadow-sticker-blue',
+    tile: 'bg-tile-blue', deep: 'border-tile-blue-deep', tileLedge: 'shadow-tile-blue', stickerLedge: 'shadow-sticker-blue', ring: 'bg-[conic-gradient(from_20deg,var(--color-score-silver),var(--color-score-silver-shine)_12%,var(--color-score-silver)_26%,var(--color-score-silver)_50%,var(--color-score-silver-shine)_62%,var(--color-score-silver)_76%,var(--color-score-silver))]', scoreFace: 'bg-tile-blue-ink text-white',
     message: 'You read most of the story well! Keep practicing to reach Independent.',
   },
   Frustration: {
     card: 'bg-shelf-card', ledge: 'shadow-ledge-yellow', badge: 'bg-result-olive', ink: 'text-result-olive',
-    tile: 'bg-score-amber', deep: 'border-score-amber-deep', tileLedge: 'shadow-[0_6px_0_var(--color-score-amber-deep)]', stickerLedge: 'shadow-[0_4px_0_var(--color-score-amber-deep)]',
+    tile: 'bg-score-amber', deep: 'border-score-amber-deep', tileLedge: 'shadow-[0_6px_0_var(--color-score-amber-deep)]', stickerLedge: 'shadow-[0_4px_0_var(--color-score-amber-deep)]', ring: 'bg-[conic-gradient(from_20deg,var(--color-score-bronze),var(--color-score-bronze-shine)_12%,var(--color-score-bronze)_26%,var(--color-score-bronze)_50%,var(--color-score-bronze-shine)_62%,var(--color-score-bronze)_76%,var(--color-score-bronze))]', scoreFace: 'bg-sticker text-result-olive',
     message: 'This story was a bit hard. Keep practicing — you’ll get there!',
   },
 }

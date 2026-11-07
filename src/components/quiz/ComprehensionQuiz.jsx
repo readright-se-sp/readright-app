@@ -139,6 +139,7 @@ function QuizFlow({ questions, passage, grade, lang, onFinish, onExit }) {
       lang={lang}
       tier={tier}
       onAnswer={answer}
+      onJump={goTo}
       onPrevious={() => (index === 0 ? setScreen('intro') : goTo(index - 1))}
       onNext={next}
       onExit={onExit}

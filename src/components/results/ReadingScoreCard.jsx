@@ -29,8 +29,8 @@ function Sparkle({ className }) {
  * bold sticker style: a gingham card in the level's colour (green / blue /
  * amber), the "Reading aloud score" pill in its top-left corner, then a cream
  * panel with the Phil-IRI level as a big pill and its message beside the
- * word-recognition score in a yellow-ringed circle. The level is always named
- * too (never colour alone).
+ * word-recognition score in a ringed circle. The level is always named too
+ * (never colour alone).
  *
  * An Independent score's ring is a turning gold gradient, and its stars and
  * sparkles glitter (they only move when motion is allowed).
@@ -63,15 +63,15 @@ export function ReadingScoreCard({ score, readingLevel }) {
           <p className="mt-2.5 text-base font-bold leading-snug text-pretty">{level.message}</p>
         </div>
 
-        {/* Score circle: yellow ring (a turning gold gradient when Independent). */}
+        {/* Score circle: the level's ring (a turning gold gradient when Independent). */}
         <div className="relative size-[112px] shrink-0 @[24rem]:size-[140px]">
           <span
             aria-hidden="true"
             className={`absolute inset-0 rounded-full ${
-              celebrate ? 'bg-conic from-track-yellow-edge via-gold-light to-track-yellow-edge motion-safe:animate-ring-spin' : 'bg-cta'
+              celebrate ? 'bg-conic from-track-yellow-edge via-gold-light to-track-yellow-edge motion-safe:animate-ring-spin' : level.ring
             }`}
           />
-          <div className={`absolute inset-[7px] flex flex-col items-center justify-center rounded-full border-[3px] bg-sticker ${level.deep} ${level.ink}`}>
+          <div className={`absolute inset-[7px] flex flex-col items-center justify-center rounded-full ${level.scoreFace}`}>
             <span className="text-[42px] font-black leading-none @[24rem]:text-[54px]">{Math.round(score)}</span>
             <span className="text-xs font-extrabold @[24rem]:text-sm">out of 100</span>
           </div>

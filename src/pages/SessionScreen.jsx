@@ -14,10 +14,12 @@
 //   pending/requesting → PermissionExplainer (in-app explanation before the
 //                        native browser prompt)
 //   denied             → PermissionDenied (device-specific recovery steps)
-//   granted            → "Read out loud": passage + live camera (a large preview
-//                        before recording, shrinking to a corner bubble while
-//                        recording) + Start reading / I'm done, then the
-//                        processing screen while results are computed.
+//   granted            → "Read out loud": live camera (a large preview before
+//                        recording, shrinking to a corner bubble while recording)
+//                        + Start reading / I'm done, then the processing screen
+//                        while results are computed. The passage stays hidden
+//                        until recording starts, so the learner's first read of
+//                        it is the one on the recording.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { usePassage } from '../hooks/usePassage'
@@ -26,8 +28,11 @@ import { useMediaRecorder } from '../hooks/useMediaRecorder'
 import { useAnalyzeSubmit } from '../hooks/useAnalyzeSubmit'
 import { useRecordingMonitor } from '../hooks/useRecordingMonitor'
 import { useCameraCheck } from '../hooks/useCameraCheck'
+import { useCameraMorph } from '../hooks/useCameraMorph'
+import { useStoryBlock } from '../hooks/useStoryBlock'
 import { detectPlatform } from '../utils/platform'
-import { CameraPreview } from '../components/quality/CameraPreview'
+import { DEFAULT_GRADE, toPassageGrade } from '../utils/gradeLevels'
+import { CameraPreview, LiveBadge } from '../components/quality/CameraPreview'
 import { RecordingStatus } from '../components/session/RecordingStatus'
 import { ProcessingScreen } from '../components/session/ProcessingScreen'
 import { ComprehensionQuiz } from '../components/quiz/ComprehensionQuiz'
@@ -35,11 +40,14 @@ import { LeaveSessionDialog } from '../components/session/LeaveSessionDialog'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { PermissionExplainer } from '../components/quality/PermissionExplainer'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
-import { StickerExitButton } from '../components/ui/ExitButton'
-import { StickerPage } from '../components/ui/StickerPage'
-import { LogoMark } from '../components/icons'
+import { SkyCardPage } from '../components/ui/SkyCardPage'
+import { GridPattern } from '../components/dashboard/DashboardParts'
+import { CAMERA_BOX, SKY_CARD_TALL, SOFT_PRIMARY, SOFT_SECONDARY } from '../components/ui/stickerStyles'
 
 const MAX_RECORDING_MS = 5 * 60 * 1000
+// The live checks wait this long after recording starts: loading the face
+// detector freezes the page for a moment, so it must miss the camera animation.
+const CHECKS_DELAY_MS = 700
 // ProcessingScreen stages: 0 sending · 1 listening · 2 checking · 3 almost done ·
 // 4 finished. The timer walks 0→2 while the analysis runs; 4 shows on success.
 const LAST_RUNNING_STEP = 2
@@ -74,15 +82,30 @@ export default function SessionScreen() {
   const { status, result, sessionSpent, submit, submitAnswers, reset } = useAnalyzeSubmit()
 
   const isRecording = recordingState === 'recording'
+  const { cameraRef, storyRef } = useCameraMorph(isRecording)
 
   // The live <video> from CameraPreview, kept in state so the monitor's check
   // hooks re-run when it mounts. Memoize the callback ref or it thrashes the node
   // and re-inits MediaPipe every render.
   const [videoEl, setVideoEl] = useState(null)
   const setVideoNode = useCallback((node) => setVideoEl(node), [])
+  // The camera's real shape, so the large preview shows the whole picture.
+  const [videoRatio, setVideoRatio] = useState(16 / 9)
+
+  const [checksDelayed, setChecksDelayed] = useState(true)
+  useEffect(() => {
+    if (!isRecording) return
+    const t = setTimeout(() => setChecksDelayed(false), CHECKS_DELAY_MS)
+    return () => {
+      clearTimeout(t)
+      setChecksDelayed(true)
+    }
+  }, [isRecording])
+  const checksLive = isRecording && !checksDelayed
 
   // Real-time GO1 monitoring — runs only while recording (active gates the checks).
-  const monitor = useRecordingMonitor({ audioTrack, videoElement: videoEl, active: isRecording })
+  const monitor = useRecordingMonitor({ audioTrack, videoElement: videoEl, active: checksLive })
+  const storyBlocked = useStoryBlock(isRecording && monitor.checks.camera?.status === 'FAIL')
   // Framing feedback on the large preview before a take: the oval turns green
   // once the face is in place. Gated off while recording (the monitor runs its
   // own camera check then) so only one MediaPipe instance is ever live.
@@ -102,6 +125,8 @@ export default function SessionScreen() {
   // aborts the analysis and drops the quiz answers, and nothing is saved — the
   // session is only stored once /results opens. Keep the quiz inside /session.
   const { user } = useCurrentUser()
+  // The grade picked on the dashboard, else the one the learner registered with.
+  const passageGrade = routeState?.passageGrade ?? toPassageGrade(user?.user_metadata?.grade_level ?? DEFAULT_GRADE)
   const [quizOpen, setQuizOpen] = useState(false)
   const [quizAnswers, setQuizAnswers] = useState(null)
   // True for MIN_ANALYZING_MS after the quiz; holds back the finish and navigation.
@@ -279,116 +304,145 @@ export default function SessionScreen() {
   }
 
   // --- Granted: "Read out loud" ----------------------------------------------
-  return (
-    <StickerPage>
-      <SessionHeader onExit={requestExit} />
+  // The passage and its title stay hidden until recording starts.
+  const storyHidden = passage && !passageError && !isRecording
 
+  return (
+    <SkyCardPage title="Read out loud" lumi={false} circle onExit={requestExit} className={SKY_CARD_TALL}>
       {/* Camera: one <video> throughout (it also feeds the live GO1 monitor),
           restyled from a large framing preview into a small corner bubble while
-          recording so the learner's eyes stay on the passage. */}
-      <div className={`mt-4 flex items-center gap-3 ${isRecording ? 'min-h-[104px] justify-between' : ''}`}>
+          recording so the learner's eyes stay on the passage. The preview fills up to
+          the height it gets on /quality-check (the screen minus that page's other
+          sections), then the passage takes what's left; a long passage shrinks it. */}
+      <div className={isRecording ? 'relative mt-3 flex min-h-[104px] items-center justify-between gap-3' : 'relative mt-3 max-h-[calc(100dvh-455px)] min-h-[140px] flex-[1000_1_0%] tall:mt-4 tall:max-h-[calc(100dvh-530px)] sm:max-h-[min(266px,calc(100dvh-455px))] sm:tall:max-h-[min(266px,calc(100dvh-530px))]'}>
         {isRecording && (
           <RecordingStatus elapsed={formatElapsed(elapsed)} problem={recordingProblem} />
         )}
-        <div
-          className={`relative flex-none transition-all duration-300 ${
-            isRecording ? (recordingProblem ? 'size-[104px]' : 'size-[84px]') : 'h-[210px] w-full'
-          }`}
-        >
+        <div className={isRecording ? 'flex-none' : 'absolute inset-0 flex items-center justify-center @container-size'}>
           <div
-            className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-[#4a3530] to-[#7a625b] shadow-level-tile ${
+            style={{ '--video-ratio': videoRatio }}
+            className={`relative ${
               isRecording
-                ? `rounded-full border-4 ${recordingProblem ? 'border-amber animate-attention-pulse' : 'border-mint'}`
-                : 'rounded-3xl border-[3px] border-level-tile-edge'
+                ? `flex-none transition-all duration-300 ${recordingProblem ? 'size-[104px]' : 'size-[84px]'}`
+                : CAMERA_BOX
             }`}
           >
-            <CameraPreview
-              stream={stream}
-              onVideoNode={setVideoNode}
-              className="absolute inset-0 h-full w-full object-cover -scale-x-100"
-            />
-            {!isRecording && (
-              <>
-                <div
-                  aria-hidden="true"
-                  className={`pointer-events-none absolute left-1/2 top-[46%] h-[150px] w-[118px] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 transition-colors duration-300 ${
-                    faceReady ? 'border-solid border-mint-light/60' : 'border-dashed border-white/50'
-                  }`}
-                />
-                {/* Colour + icon + words (never colour alone). */}
-                <div className="absolute inset-x-3 bottom-3 flex justify-center" aria-live="polite">
-                  {faceReady ? (
-                    <span className="flex items-center gap-1.5 rounded-full bg-goal px-3.5 py-1 text-sm font-black text-white">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <path d="m5 13 4 4L19 7" />
-                      </svg>
-                      Great! You're ready to read
-                    </span>
-                  ) : (
-                    <span className="rounded-full border-2 border-level-tile-edge bg-white px-3.5 py-1 text-sm font-black text-level-ink">
-                      Keep your face in the circle
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-          {isRecording && (
-            <span
-              aria-hidden="true"
-              className={`absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full border-[3px] border-level-tile-edge text-sm font-black ${
-                recordingProblem ? 'bg-cta text-level-ink' : 'bg-mint text-white'
+            <div
+              ref={cameraRef}
+              className={`absolute inset-0 overflow-hidden bg-gradient-to-br from-[#4a3530] to-[#7a625b] ${
+                isRecording
+                  ? `rounded-full border-4 ${recordingProblem ? 'border-amber animate-attention-pulse' : 'border-mint'}`
+                  : 'rounded-3xl'
               }`}
             >
-              {recordingProblem ? '!' : '✓'}
-            </span>
-          )}
+              <CameraPreview
+                stream={stream}
+                onVideoNode={setVideoNode}
+                onVideoRatio={setVideoRatio}
+                className={`absolute inset-0 h-full w-full -scale-x-100 ${isRecording ? 'object-cover' : 'object-contain sm:object-cover'}`}
+              />
+              {!isRecording && (
+                <>
+                  <LiveBadge />
+                  <div
+                    aria-hidden="true"
+                    className={`pointer-events-none absolute left-1/2 top-[44%] aspect-[7/9] h-[72%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] border-4 transition-colors duration-300 ${
+                      faceReady ? 'border-solid border-score-green' : 'border-dashed border-white/85'
+                    }`}
+                  />
+                  {/* Colour + icon + words (never colour alone). */}
+                  <div className="absolute inset-x-3 bottom-3 flex justify-center" aria-live="polite">
+                    {faceReady ? (
+                      <span className="flex items-center gap-1.5 rounded-full bg-goal px-3.5 py-1 text-sm font-black text-white">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="m5 13 4 4L19 7" />
+                        </svg>
+                        Great! You're ready to read
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-white px-3.5 py-1 text-sm font-black text-level-ink">
+                        Keep your face in the circle
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            {isRecording && (
+              <span
+                aria-hidden="true"
+                className={`absolute -bottom-0.5 -right-0.5 flex size-7 items-center justify-center rounded-full border-[3px] border-white text-sm font-black ${
+                  recordingProblem ? 'bg-cta text-level-ink' : 'bg-mint text-white'
+                }`}
+              >
+                {recordingProblem ? '!' : '✓'}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Passage */}
-      <div className="mt-4 rounded-3xl border-[3px] border-level-tile-edge bg-sticker px-4.5 pt-4 pb-5 shadow-level-tile">
-        <div className="flex items-center justify-between gap-2.5">
-          <p className="rounded-full bg-level-pill px-3 py-0.5 text-sm font-black uppercase tracking-[0.06em] text-white">
-            Read out loud
-          </p>
-          <span className="rounded-full border-2 border-level-tile-edge bg-result-green px-2.5 py-px text-sm font-black text-goal">
-            Easy
-          </span>
-        </div>
-        {/* TODO(passage title): placeholder until the backend passage data
-            includes a title; then this shows it. */}
-        <h2 className="mt-2.5 mb-2.5 text-[24px] font-black leading-tight text-level-ink">
-          {passage?.title ?? "Today's Story"}
-        </h2>
-        {passageError ? (
-          <div role="alert" className="flex flex-col gap-3">
-            <p className="text-base leading-[24px] text-ink">
-              We couldn't load your reading passage. Please check your internet, then tap Try Again.
+      <div ref={storyRef} className="relative isolate mt-3.5 flex grow flex-col overflow-clip rounded-3xl bg-sticker px-4.5 pb-5 pt-4 shadow-cream-edge [@media(max-height:680px)]:pb-3 [@media(max-height:680px)]:pt-3">
+        <GridPattern cell={24} color="#e8b83a" opacity={0.3} className="-z-10" />
+        {storyHidden ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
+            <span className="flex size-24 items-center justify-center rounded-full bg-white [@media(max-height:680px)]:size-16">
+              <img src="/mascot-head-icon.svg" alt="" className="h-[64px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-11" />
+            </span>
+            <h2 className="text-[24px] font-black leading-tight text-level-ink">Today's Story</h2>
+            <p className="text-base font-bold text-level-ink text-pretty">Your story is ready! Tap Start reading to see it</p>
+            <p className="mt-1 flex items-baseline gap-1.5 rounded-full bg-white px-4 py-1">
+              <span className="text-sm font-black uppercase tracking-[0.06em] text-level-muted">Grade</span>
+              <span className="text-xl font-black leading-tight text-level-ink">{passageGrade}</span>
             </p>
-            <button
-              type="button"
-              onClick={retryPassage}
-              className="min-h-12 self-start rounded-2xl border-[3px] border-level-tile-edge bg-level-pill px-6 text-lg font-black text-white shadow-level-tile active:translate-y-1 active:shadow-none"
-            >
-              Try Again
-            </button>
           </div>
-        ) : passage ? (
-          <p className="text-[19px] font-semibold leading-[1.7] text-ink">{passage.text}</p>
         ) : (
-          <p className="text-base leading-[24px] text-level-muted" aria-live="polite">
-            Getting your passage ready…
-          </p>
+          <>
+            {/* TODO(passage title): placeholder until the backend passage data
+                includes a title; then this shows it. */}
+            <h2 className="text-[24px] font-black leading-tight text-level-ink">
+              {passage?.title ?? "Today's Story"}
+            </h2>
+            <div className="mt-2.5 flex flex-1 flex-col">
+              {passageError ? (
+                <div role="alert" className="flex flex-col gap-3">
+                  <p className="text-base leading-[24px] text-ink">
+                    We couldn't load your reading passage. Please check your internet, then tap Try Again.
+                  </p>
+                  <button type="button" onClick={retryPassage} className={`${SOFT_PRIMARY} min-h-12 px-6 text-lg`}>
+                    Try Again
+                  </button>
+                </div>
+              ) : !passage ? (
+                <p className="text-base leading-[24px] text-level-muted" aria-live="polite">
+                  Getting your passage ready…
+                </p>
+              ) : (
+                <div className="relative flex-1 overflow-clip rounded-2xl bg-white px-3.5 py-3 shadow-cream-button motion-safe:animate-fade-in">
+                  <p aria-hidden={storyBlocked} className="text-[19px] font-semibold leading-[1.7] text-ink [@media(max-height:680px)]:leading-normal">{passage.text}</p>
+                  {/* Covers the story instead of removing it, so nothing moves and
+                      it comes back exactly where the learner left off. */}
+                  {storyBlocked && (
+                    <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-shelf-card px-4 text-center motion-safe:animate-fade-in">
+                      <img src="/mascot-head-icon.svg" alt="" className="h-16 w-auto [@media(max-height:680px)]:h-11" />
+                      <p className="text-xl font-black text-level-ink">Oops!</p>
+                      <p className="text-base font-bold text-level-ink text-pretty">Move back into the circle so I can see you</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 
       {/* Submit error, or a real-time check failed → the take was discarded. */}
       {(errorMessage || (!isRecording && qualityFailure)) && (
-        <div role="alert" className="mt-4 flex items-start gap-3 rounded-2xl border-[3px] border-level-tile-edge bg-result-pink px-3.5 py-3">
+        <div role="alert" className="mt-3.5 flex items-start gap-3 rounded-2xl bg-result-pink px-3.5 py-3 shadow-ledge-pink">
           <span
             aria-hidden="true"
-            className="flex size-7 flex-none items-center justify-center rounded-full border-2 border-level-tile-edge bg-brand text-base font-black text-white"
+            className="flex size-7 flex-none items-center justify-center rounded-full bg-brand text-base font-black text-white"
           >
             !
           </span>
@@ -402,47 +456,33 @@ export default function SessionScreen() {
         <button
           type="button"
           onClick={handleStop}
-          className="mt-5 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] border-level-tile-edge bg-white px-4 text-xl font-black text-level-ink shadow-level-tile active:translate-y-1 active:shadow-none"
+          className={`${SOFT_SECONDARY} mt-4 min-h-14 gap-2.5 px-4 text-xl`}
         >
           <span className="size-3.5 rounded-[3px] bg-level-pill" aria-hidden="true" />
           I&apos;m done!
         </button>
       ) : (
         <>
-          <p className="mt-4 text-center text-[15px] font-bold text-level-muted">
+          <p className="mt-3.5 text-center text-[15px] font-bold text-level-muted [@media(max-height:680px)]:hidden">
             Read clearly, at your own pace
           </p>
           <button
             type="button"
             onClick={handleStart}
             disabled={!passage}
-            className={`mt-3 flex min-h-14 w-full items-center justify-center gap-2.5 rounded-2xl border-[3px] px-4 text-xl font-black ${
+            className={`mt-3.5 min-h-14 gap-2.5 px-4 text-xl ${
               passage
-                ? 'border-level-tile-edge bg-level-pill text-white shadow-level-tile active:translate-y-1 active:shadow-none'
-                : 'cursor-not-allowed border-level-edge bg-sticker text-level-muted'
+                ? SOFT_PRIMARY
+                : 'flex w-full cursor-not-allowed items-center justify-center rounded-2xl border-[3px] border-cream-edge bg-cream-button font-black text-level-muted shadow-cream-button'
             }`}
           >
-            <span className={`size-3.5 rounded-full ${passage ? 'bg-white' : 'bg-level-edge'}`} aria-hidden="true" />
+            <span className={`size-3.5 rounded-full ${passage ? 'bg-white' : 'bg-cream-edge'}`} aria-hidden="true" />
             {qualityFailure ? 'Try again' : 'Start reading'}
           </button>
         </>
       )}
       {leaveDialog}
-    </StickerPage>
-  )
-}
-
-/** Exit · logo (empty third column keeps the logo centred). `onExit` is left out while preparing. */
-function SessionHeader({ onExit }) {
-  return (
-    <header className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 pt-[max(1rem,env(safe-area-inset-top))]">
-      {onExit ? <StickerExitButton onClick={onExit} /> : <span />}
-      <div className="flex items-center gap-1.5">
-        <span className="flex -translate-y-0.5"><LogoMark size={32} /></span>
-        <span className="text-xl font-black text-level-ink">ReadRight</span>
-      </div>
-      <span />
-    </header>
+    </SkyCardPage>
   )
 }
 
@@ -451,14 +491,8 @@ function SessionHeader({ onExit }) {
 // like a direct transition rather than a loading screen.
 function Preparing() {
   return (
-    <StickerPage>
-      <SessionHeader />
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 pb-10">
-        <img src="/mascot-reading.svg" alt="" className="w-24 motion-safe:animate-lumi-bob" />
-        <p className="text-center text-lg font-bold text-level-muted" aria-live="polite">
-          Preparing camera…
-        </p>
-      </div>
-    </StickerPage>
+    <div role="status">
+      <SkyCardPage title="Preparing camera…" subtitle="Lumi is getting everything ready" className="pb-6" />
+    </div>
   )
 }
