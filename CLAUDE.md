@@ -18,7 +18,7 @@ npm run lint       # ESLint flat config — `eslint .` (ESLint 10, react-hooks +
 ```
 
 **Previewing the UI without the backend (`npm run dev` only — production ignores these):**
-- `?fakeAnalysis` on any page URL (once per tab) skips FastAPI after "I'm done!" — a full reading → quiz → analyzing screen → sample results. `=20` sets seconds, `=fail` simulates an error, `=0` turns it off. See `src/utils/devPreview.js`.
+- `?fakeAnalysis` on any page URL (once per tab) runs the v1 session flow with no backend — a sample passage → full reading → quiz → analyzing screen → sample results. `=20` sets seconds, `=fail` simulates an error, `=0` turns it off. See `src/utils/devPreview.js`.
 - Opening `/results` directly shows a sample result: `?sample=instructional` (default) / `independent` / `frustration` / `allMiscues`, add `&first` for the first-time note. See `src/data/sampleResults.js`.
 - Opening `/dashboard?sample` (or `/history?sample`) shows a dummy progress history (`=basic` hides the not-yet-saved fields so the "Coming soon" boxes show; `=empty` / `loading` / `error` show those states). See `src/data/sampleDashboard.js`.
 - Fake and sample results carry `dev_sample: true` and are never saved to Supabase.
@@ -36,7 +36,10 @@ VITE_SUPABASE_URL=
 VITE_SUPABASE_ANON_KEY=
 VITE_FASTAPI_URL=
 VITE_API_KEY=
+VITE_USE_V1_API=
 ```
+
+- `VITE_USE_V1_API` — set to `true` to use the `/v1` endpoints (`store/api-endpoints.md`), with the learner's Supabase token sent as `Authorization: Bearer`. Anything else keeps the old flow: Supabase passages and `POST /analyze`.
 
 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — used to initialise the Supabase JS client in `src/lib/supabase.js`.
 - `VITE_FASTAPI_URL` — base URL for the FastAPI AI microservice (e.g., `https://api.readright.example.com`).

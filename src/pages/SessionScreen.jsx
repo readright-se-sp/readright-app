@@ -55,23 +55,23 @@ function formatElapsed(totalSeconds) {
 }
 
 export default function SessionScreen() {
-  // Passages are static samples for now (see usePassage), randomly picked by
-  // usePassage. May still be loading when the camera is granted; the
-  // preview/GO1 checks must never be blocked on it (CLAUDE.md), only the
-  // passage card and the Start button wait for content.
-  const { passage, error: passageError, retry: retryPassage } = usePassage()
   const platform = useMemo(() => detectPlatform(), [])
   const navigate = useNavigate()
   const { state: routeState } = useLocation()
   const isFirstSession = routeState?.isFirstSession ?? false
+  // The passage (and, on the v1 API, the session) comes from usePassage. May still
+  // be loading when the camera is granted; the preview/GO1 checks must never be
+  // blocked on it (CLAUDE.md), only the passage card and the Start button wait
+  // for content.
+  const { passage, sessionId, error: passageError, retry: retryPassage } = usePassage(routeState?.passageGrade)
 
   const { stream, audioTrack, permissionStatus, errorKind, requestStream, retry } = useMediaStream()
   const { recordingState, elapsed, start, stop } = useMediaRecorder(stream, {
     maxDurationMs: MAX_RECORDING_MS,
   })
-  // useAnalyzeSubmit owns the FastAPI POST: AbortController, 120s timeout, and
-  // the idle/submitting/success/error/timeout state machine (see ARCHITECTURE.md).
-  const { status, result, submit, reset } = useAnalyzeSubmit()
+  // useAnalyzeSubmit owns the upload and analysis calls: AbortController, timeouts,
+  // and the idle/submitting/success/error/timeout state machine (see ARCHITECTURE.md).
+  const { status, result, sessionSpent, submit, submitAnswers, reset } = useAnalyzeSubmit()
 
   const isRecording = recordingState === 'recording'
 
@@ -159,18 +159,22 @@ export default function SessionScreen() {
   async function handleStop() {
     if (stopReasonRef.current) return // a quality failure already claimed this take
     stopReasonRef.current = true
+    // Read before stop() ends the take. The backend rejects 0, which a take
+    // shorter than a second would otherwise send.
+    const durationSeconds = Math.max(1, elapsed)
     const file = await stop()
     if (!file) return
     setProcessingStep(0)
     setQuizAnswers(null)
     setQuizOpen(true)
-    submit(file, passage.id)
+    submit(file, { passageId: passage.id, sessionId, durationSeconds })
   }
 
   function handleQuizFinish(answers) {
     setQuizAnswers(answers)
     setQuizOpen(false)
     setAnalyzingHold(true)
+    submitAnswers(answers)
   }
 
   // Bail out of the session back to the dashboard. If a take is in progress,
@@ -197,6 +201,12 @@ export default function SessionScreen() {
     if (!passage) return // nothing to read yet — the button is disabled too
     reset() // clear any prior error/timeout before a fresh take
     setAnalyzingHold(false)
+    // The backend already holds a recording for this session, so load a new one.
+    // The Start button comes back once its passage is ready.
+    if (sessionSpent) {
+      retryPassage()
+      return
+    }
     setQualityFailure(null)
     monitor.clearFailure() // drop the monitor's stale failure so it can't re-fire
     stopReasonRef.current = false
@@ -250,6 +260,7 @@ export default function SessionScreen() {
     return (
       <>
         <ComprehensionQuiz
+          sessionId={sessionId}
           passage={passage}
           grade={user?.user_metadata?.grade_level}
           onFinish={handleQuizFinish}

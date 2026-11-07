@@ -8,10 +8,9 @@
  * Created : 2026-05-17 by Reev Santillan
  *
  * Returns the learner's session history, ordered chronologically (oldest →
- * newest) so chart data always renders left-to-right across time.
- *
- * TODO(backend): static samples for now (data/sampleData.js) — replace with the
- * backend call. The frontend must not query Supabase directly.
+ * newest) so chart data always renders left-to-right across time. Comes from
+ * GET /v1/dashboard when VITE_USE_V1_API is 'true', otherwise from the static
+ * samples (data/sampleData.js). The frontend must not query Supabase directly.
  *
  * Returns
  * -------
@@ -19,8 +18,8 @@
  *                       session_timestamp ASC.
  *   loading   {boolean} True while the initial load is in-flight.
  *   error     {object|null} Set if the load fails.
- *   retry     {Function} Re-runs the load (the dashboard's "Try again"); a
- *                       no-op while the data is static.
+ *   retry     {Function} Re-runs the load (the dashboard's "Try again"); does
+ *                       nothing while the data is static.
  *
  * Session row shape — 19 fields matching AssessmentResultJSON in api.js:
  *   Core identifiers  : learner_id, passage_id, session_timestamp
@@ -45,11 +44,62 @@
  *                return shape { sessions, loading, error } (retry was added
  *                alongside) or the query order.
  */
+import { useCallback, useEffect, useState } from 'react'
 import { sampleSessions } from '../data/sampleData'
+import { getDashboard } from '../lib/api'
 
-// TODO(backend): make this re-run the backend call once it replaces the samples.
-const retry = () => {}
+const USE_API = import.meta.env.VITE_USE_V1_API === 'true'
+
+// /v1/dashboard also lists sessions with no finished reading (assigned, failed);
+// their miscue counts are null, and they must not count towards stats or charts.
+function hasReadingResult(session) {
+  return session.correct != null
+}
+
+// Maps a /v1/dashboard row to the session row shape documented above.
+function toSessionRow(session) {
+  const level = session.reading_level
+  return {
+    ...session,
+    id: session.session_id, // /history/:id
+    session_timestamp: session.completed_at ?? session.assigned_at,
+    reading_level: level && level[0].toUpperCase() + level.slice(1).toLowerCase(),
+  }
+}
 
 export function useSessionHistory() {
-  return { sessions: sampleSessions, loading: false, error: null, retry }
+  const [sessions, setSessions] = useState(USE_API ? [] : sampleSessions)
+  const [loading, setLoading] = useState(USE_API)
+  const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
+
+  useEffect(() => {
+    if (!USE_API) return
+    let cancelled = false
+
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const dashboard = await getDashboard()
+        if (cancelled) return
+        // A backend not yet updated may still send the older recent_sessions shape.
+        if (!Array.isArray(dashboard.sessions)) throw new Error('Dashboard response has no sessions')
+        setSessions(dashboard.sessions.filter(hasReadingResult).map(toSessionRow))
+      } catch (err) {
+        if (!cancelled) setError(err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [attempt])
+
+  const retry = useCallback(() => setAttempt((n) => n + 1), [])
+
+  return { sessions, loading, error, retry }
 }

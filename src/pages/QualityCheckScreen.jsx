@@ -131,7 +131,12 @@ export default function QualityCheckScreen() {
     if (!allPassed) return
     // /pre-session already set rr_onboarding_seen, so re-reading it here would
     // always say "not first" — forward the value it captured instead.
-    navigate('/session', { state: { isFirstSession: location.state?.isFirstSession ?? false } })
+    navigate('/session', {
+      state: {
+        isFirstSession: location.state?.isFirstSession ?? false,
+        passageGrade: location.state?.passageGrade,
+      },
+    })
   }
 
   // Tip = the first failing check's own message (specific: e.g. "too loud" vs

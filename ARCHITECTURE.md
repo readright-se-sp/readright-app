@@ -287,7 +287,7 @@ The JSON returned by FastAPI and used by `ResultsPage`:
 | API | Used in | Active during | Notes |
 |---|---|---|---|
 | `getUserMedia` | `useMediaStream` | GO1 + Recording | One combined audio+video stream; the only `getUserMedia` caller and the only place tracks are stopped |
-| `MediaRecorder` | `useMediaRecorder` | Recording only | Consumes the `useMediaStream` stream; MIME: `video/mp4` (iOS), `video/webm;codecs=vp8,opus` (Android/Chrome) |
+| `MediaRecorder` | `useMediaRecorder` | Recording only | Consumes the `useMediaStream` stream; MIME: `video/webm;codecs=vp8,opus` (preferred), `video/mp4` (fallback where WebM recording is unsupported, e.g. older iOS) |
 | `Web Audio API (AnalyserNode)` | `useNoiseCheck`, `useMicCheck`, `useMicActivity` | GO1 + Recording | Close the AudioContext on cleanup. `useMicCheck` runs on /quality-check; `useMicActivity` is its non-latching recording-time counterpart |
 | `Canvas API` | `useLightingCheck` | GO1 + Recording | Off-screen `<canvas>` element; sample every 500ms |
 | `MediaPipe Face Mesh (WASM)` | `useCameraCheck` | GO1 + Recording | Also runs during recording, driven by `useRecordingMonitor` (gated off when not recording) |
