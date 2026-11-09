@@ -54,7 +54,9 @@ readright-app/
 │   │   ├── QualityCheckScreen.jsx   # /quality-check — GO1 four-check gate (useQualityGate) → /session
 │   │   ├── SessionScreen.jsx        # /session — permission gate + passage + record/stop + inline processing
 │   │   ├── SessionResultsPage.jsx   # /results — results display + useSessionStorage
-│   │   └── DashboardPage.jsx        # /dashboard — personal progress (trend charts + panels)
+│   │   ├── DashboardPage.jsx        # /dashboard — personal progress (trend charts + panels)
+│   │   ├── HistoryPage.jsx          # /history — every past reading
+│   │   └── ReadingDetailsPage.jsx   # /history/:sessionId — one past reading's results
 │   │
 │   ├── components/
 │   │   ├── auth/
@@ -64,13 +66,22 @@ readright-app/
 │   │   │   ├── PermissionExplainer.jsx # In-app camera/mic explanation shown BEFORE native prompt
 │   │   │   └── PermissionDenied.jsx    # Device-specific recovery screen (switches on errorKind + platform)
 │   │   ├── session/
-│   │   │   └── RecordingChecks.jsx     # Live GO1 indicator strip shown during recording (icon + label + ✓/✗)
+│   │   │   ├── RecordingStatus.jsx     # Beside the camera bubble while recording: "Recording 0:42" pill, or a fix-it tip when a live check fails
+│   │   │   ├── ProcessingScreen.jsx    # "Analyzing your reading…" step screen (shown after the quiz if the analysis is still running)
+│   │   │   └── LeaveSessionDialog.jsx  # "Stop reading now?" — confirm before leaving during recording or the quiz
+│   │   ├── quiz/                       # Comprehension quiz, rendered inside /session after "I'm done!" while /analyze runs
+│   │   │   ├── ComprehensionQuiz.jsx   # Screen flow: intro → questions → review → done → onFinish(answers)
+│   │   │   ├── QuizIntro.jsx / QuizQuestion.jsx / QuizReview.jsx / QuizDone.jsx
+│   │   │   ├── QuizParts.jsx           # Shared page/card/button/icon pieces
+│   │   │   └── quizLabels.js           # Learner-facing labels + grade → text-size tier
 │   │   ├── results/
-│   │   │   ├── ReadingLevelCard.jsx    # Reading-level badge card
-│   │   │   ├── StatCard.jsx            # WPM / word-recognition stat tile
-│   │   │   ├── MiscueBreakdown.jsx     # Miscue type counts
-│   │   │   ├── ReadingHabits.jsx       # Phil-IRI behavioral flags (habit-improvement framing)
-│   │   │   └── ResultsSkeleton.jsx     # Loading skeleton for the results page
+│   │   │   ├── ComprehensionCard.jsx   # "Did you understand the story?" — shown only when the result has comprehension_level (1–3)
+│   │   │   ├── ReadingScoreCard.jsx    # Reading Aloud Score: word recognition out of 100 + Phil-IRI level badge
+│   │   │   ├── SpeedCard.jsx           # "How fast did Lumi fly?" — words per minute vs the goal
+│   │   │   ├── WordDetective.jsx       # Miscue counts per type (the old Miscue Breakdown); opens WordReviewSheet when miscue_details exist
+│   │   │   ├── WordReviewSheet.jsx     # Per-word review: what was said → how it should sound (read aloud), sentence from the story
+│   │   │   ├── HowIRead.jsx            # Phil-IRI behavioral flags (habit-improvement framing)
+│   │   │   └── resultsCopy.js          # Learner-facing copy + colours (miscue keys come from lib/philIri.js)
 │   │   ├── dashboard/
 │   │   │   ├── ProfileHeaderCard.jsx        # Learner profile header
 │   │   │   ├── StatsSummaryCard.jsx         # Summary stats card
@@ -103,6 +114,9 @@ readright-app/
 │   │   ├── useSessionStorage.js    # Wraps saveSessionRecord — StrictMode once-guard → { saveStatus }
 │   │   ├── useSessionHistory.js    # Supabase SELECT sessions ORDER BY session_timestamp ASC
 │   │   ├── usePassage.js           # Fetches passages from Supabase (fetchPassages) + random pick → { passage, loading, error, retry }
+│   │   ├── useComprehensionQuiz.js # PLACEHOLDER quiz questions → { questions, loading, error } (to be fetched from Supabase per passage)
+│   │   ├── useReadAloud.js         # Web Speech API read-aloud for quiz text → { supported, playing, readingIdx, play, stop }
+│   │   ├── useAudioClip.js         # Plays a short audio clip URL (learner's own word recordings, once the backend provides them)
 │   │   ├── useCurrentUser.js       # Resolves signed-in user → { user, displayName, initial }
 │   │   └── useAuth.js              # Supabase Auth state (session, user, signIn, signOut)
 │   │
@@ -119,8 +133,7 @@ readright-app/
 ├── .env.local                      # Gitignored. VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY,
 │                                   #   VITE_FASTAPI_URL, VITE_API_KEY
 ├── index.html
-├── vite.config.js                  # Vite config — @vitejs/plugin-react + @tailwindcss/vite (no vite-plugin-pwa);
-│                                   #   preview.allowedHosts permits cloudflared/ngrok tunnels for mobile PWA testing
+├── vite.config.js                  # Vite config — @vitejs/plugin-react + @tailwindcss/vite (no vite-plugin-pwa)
 └── package.json                    # Tailwind v4 is zero-config — no tailwind.config.js or postcss.config.js
 ```
 
@@ -138,6 +151,8 @@ Defined in `src/App.jsx` using `<BrowserRouter>` + `<Routes>` / `<Route>` (React
 | `/session` | `SessionScreen` | `AuthGuard` — redirect to `/login` if unauthenticated |
 | `/results` | `SessionResultsPage` | `AuthGuard` — redirect to `/login`; redirect to `/session` if no result state |
 | `/dashboard` | `DashboardPage` | `AuthGuard` — redirect to `/login` |
+| `/history` | `HistoryPage` | `AuthGuard` — redirect to `/login`; every past reading, from the dashboard's "See all my readings" |
+| `/history/:sessionId` | `ReadingDetailsPage` | `AuthGuard` — redirect to `/login`; one past reading's full results (read-only) |
 | `/` and `*` | Redirect → `/login` | — |
 
 All pages are **eagerly imported** today — per-route `React.lazy()` + `<Suspense>` splitting is **not yet implemented** (only vendor chunk-splitting is configured in `vite.config.js`). The learner flow runs `/login → /pre-session → /quality-check → /session → /results`, with `/dashboard` reachable from the results page.
@@ -146,14 +161,14 @@ Navigation after submission: `SessionScreen` navigates to `/results` using `useN
 
 ### Planned (stubbed) routes
 
-`LoginPage` renders two secondary actions that are **stubs** — the UI exists per the Figma design, but no route, page, or handler is wired up yet:
+`LoginPage` renders two secondary actions. Registration is wired up; password recovery is still a **stub** (UI only, no route/handler):
 
 | Trigger (LoginPage) | Intended destination | Status |
 |---|---|---|
-| "Join ReadRight" (registration link) | `/register` → `RegisterPage` | Stub — button has no `onClick`/route. No sign-up flow exists. |
+| "Join ReadRight" (registration link) | `/register` → `RegisterPage` | **Implemented** — `<Link>` to `RegisterPage`, which calls `signUp` from `useAuth` (via `AuthContext`). Full name / grade / age are stored as Supabase Auth `user_metadata` (`display_name`, `grade_level`, `age`). |
 | "Forgot?" (password recovery) | `/forgot-password` → recovery flow | Stub — button has no `onClick`/route. No recovery flow exists. |
 
-These are inert `type="button"` elements today. Wiring them up requires adding the route in `src/App.jsx`, the page under `src/pages/`, and the corresponding Supabase Auth call (`signUp` / `resetPasswordForEmail`) in a hook. Until then, do not present them as working flows.
+"Forgot?" is still an inert `type="button"`. Wiring it up requires adding the route in `src/App.jsx`, the page under `src/pages/`, and the corresponding Supabase Auth call (`resetPasswordForEmail`) in a hook. Until then, do not present it as a working flow.
 
 ---
 
@@ -272,7 +287,7 @@ The JSON returned by FastAPI and used by `ResultsPage`:
 | API | Used in | Active during | Notes |
 |---|---|---|---|
 | `getUserMedia` | `useMediaStream` | GO1 + Recording | One combined audio+video stream; the only `getUserMedia` caller and the only place tracks are stopped |
-| `MediaRecorder` | `useMediaRecorder` | Recording only | Consumes the `useMediaStream` stream; MIME: `video/mp4` (iOS), `video/webm;codecs=vp8,opus` (Android/Chrome) |
+| `MediaRecorder` | `useMediaRecorder` | Recording only | Consumes the `useMediaStream` stream; MIME: `video/webm;codecs=vp8,opus` (preferred), `video/mp4` (fallback where WebM recording is unsupported, e.g. older iOS) |
 | `Web Audio API (AnalyserNode)` | `useNoiseCheck`, `useMicCheck`, `useMicActivity` | GO1 + Recording | Close the AudioContext on cleanup. `useMicCheck` runs on /quality-check; `useMicActivity` is its non-latching recording-time counterpart |
 | `Canvas API` | `useLightingCheck` | GO1 + Recording | Off-screen `<canvas>` element; sample every 500ms |
 | `MediaPipe Face Mesh (WASM)` | `useCameraCheck` | GO1 + Recording | Also runs during recording, driven by `useRecordingMonitor` (gated off when not recording) |
@@ -319,7 +334,7 @@ The GO1 checks don't stop once recording begins — `SessionScreen` keeps watchi
 - It **reuses** `useCameraCheck` / `useLightingCheck` / `useNoiseCheck` unchanged, and swaps `useMicCheck` (which latches PASS for the one-time gate) for **`useMicActivity`** — a non-latching counterpart that tracks time-since-last-loud-sample and FAILs after a continuous silence window. The silence window lives inside that hook because silence is a *duration*, not an instantaneous state (normal reading pauses between words would flap a downstream timer).
 - Checks run **only while `active`** (i.e. recording). The monitor passes `null` inputs when inactive, relying on each leaf hook's `if (!input) return` guard to fully tear down MediaPipe + AudioContexts — no background CPU cost when idle.
 - A per-check **watchdog** arms a timer while a check reads `FAIL` and cancels it the moment the check returns to PASS/CHECKING, so only a *sustained* failure trips. Grace windows: mic 10s (enforced inside `useMicActivity`), camera / lighting / ambient-noise 5s each, plus a short startup cushion for the video checks so MediaPipe warm-up at the start of a take isn't counted. A `firedRef` latch raises exactly one `failure` per take.
-- On `failure`, `SessionScreen` **captures the reason first** (the monitor clears its own `failure` once recording stops), then stops the recorder and **discards** the file — it does not submit. The learner sees the specific reason and a "Record Again" button (`handleStart` calls `clearFailure()` so a stale failure can't re-fire). During recording the four statuses render as `components/session/RecordingChecks.jsx` (icon + label + ✓/✗, never colour alone). This keeps the failure → re-record loop within the 5-step session-flow constraint.
+- On `failure`, `SessionScreen` **captures the reason first** (the monitor clears its own `failure` once recording stops), then stops the recorder and **discards** the file — it does not submit. The learner sees the specific reason and a "Try again" button (`handleStart` calls `clearFailure()` so a stale failure can't re-fire). During recording the camera preview shrinks to a corner bubble (green ring + ✓ when all checks pass; amber, pulsing, + ! when one fails) and `components/session/RecordingStatus.jsx` shows a "Recording" timer pill or the failing check's fix-it tip — state is never colour alone. This keeps the failure → re-record loop within the 5-step session-flow constraint.
 
 ---
 
@@ -346,8 +361,8 @@ RLS: `SELECT` / `INSERT` only where `auth.uid() = learner_id`.
 
 The `passages` table is the **single source of truth** for available reading passages — the frontend no longer ships a hardcoded bank. 4 columns:
 
-`id` (UUID PK) · `text` (TEXT) · `word_count` (INTEGER) · `created_at` (TIMESTAMPTZ)
+`passage_id` (UUID PK) · `text` (TEXT) · `word_count` (INTEGER) · `created_at` (TIMESTAMPTZ)
 
-There is **no `title` column** — the session screen shows a static heading. The frontend reads passages via `lib/supabase.js → fetchPassages` (`SELECT id, text, word_count ORDER BY created_at`), wrapped by the `usePassage` hook which picks one at random per session. `passage.id` (the UUID) is what flows on to `/analyze` as `passage_id` and into the `sessions.passage_id` column.
+There is **no `title` column** — the session screen shows a static heading. The frontend reads passages via `lib/supabase.js → fetchPassages` (`SELECT passage_id, text, word_count ORDER BY created_at`; the `passage_id` column is mapped to `passage.id` in the frontend), wrapped by the `usePassage` hook which picks one at random per session. `passage.id` (the `passage_id` UUID) is what flows on to `/analyze` as `passage_id` and into the `sessions.passage_id` column.
 
 RLS: `SELECT` allowed for the learner.

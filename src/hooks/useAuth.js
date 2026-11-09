@@ -15,6 +15,8 @@ import { supabase } from '../lib/supabase'
  *   session  {object|null}  Raw Supabase session (null when signed out).
  *   user     {object|null}  Convenience accessor for session.user.
  *   signIn   {function}     ({ email, password }) → Promise<{ error }>.
+ *   signUp   {function}     ({ email, password, fullName, gradeLevel, age })
+ *                           → Promise<{ session, error }>.
  *   loading  {boolean}      True until the first auth event fires, preventing
  *                           a flash of unauthenticated UI on page load.
  *   signOut  {function}     () → Promise; clears the persisted session.
@@ -43,9 +45,23 @@ export function useAuth() {
     return { error }
   }
 
+  // Learner self sign-up. Profile fields ride along as user_metadata —
+  // display_name is what useCurrentUser already reads for the header/avatar.
+  // `data.session` is null when the project requires email confirmation.
+  async function signUp({ email, password, fullName, gradeLevel, age }) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { display_name: fullName, grade_level: gradeLevel, age },
+      },
+    })
+    return { session: data?.session ?? null, error }
+  }
+
   function signOut() {
     return supabase.auth.signOut()
   }
 
-  return { session, user: session?.user ?? null, signIn, loading, signOut }
+  return { session, user: session?.user ?? null, signIn, signUp, loading, signOut }
 }

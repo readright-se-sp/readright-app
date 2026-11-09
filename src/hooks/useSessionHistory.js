@@ -7,16 +7,19 @@
  * Assignee: Christian  |  Priority: High  |  Estimate: 3 pts
  * Created : 2026-05-17 by Reev Santillan
  *
- * Fetches the authenticated learner's full session history from Supabase,
- * ordered chronologically (oldest → newest) so chart data always renders
- * left-to-right across time.
+ * Returns the learner's session history, ordered chronologically (oldest →
+ * newest) so chart data always renders left-to-right across time. Comes from
+ * GET /v1/dashboard when VITE_USE_V1_API is 'true', otherwise from the static
+ * samples (data/sampleData.js). The frontend must not query Supabase directly.
  *
  * Returns
  * -------
- *   sessions  {Array}   All rows from the `sessions` table for this learner,
- *                       sorted by session_timestamp ASC.
- *   loading   {boolean} True while the initial query is in-flight.
- *   error     {object|null} Supabase PostgrestError if the query fails.
+ *   sessions  {Array}   All session rows for this learner, sorted by
+ *                       session_timestamp ASC.
+ *   loading   {boolean} True while the initial load is in-flight.
+ *   error     {object|null} Set if the load fails.
+ *   retry     {Function} Re-runs the load (the dashboard's "Try again"); does
+ *                       nothing while the data is static.
  *
  * Session row shape — 19 fields matching AssessmentResultJSON in api.js:
  *   Core identifiers  : learner_id, passage_id, session_timestamp
@@ -38,35 +41,65 @@
  *   Blocks     : REA-33 · RR-049 (Dashboard Miscue + Behavioral History Charts)
  *                That ticket will consume this same hook to power the Miscue
  *                Patterns and Behavioral History sections. Do NOT alter the
- *                return shape { sessions, loading, error } or the query order.
- *
- * Security note
- * -------------
- *   Supabase RLS ensures each learner only sees their own rows. The session
- *   persists across reloads (see supabase.js), so this hook re-fetches on each
- *   mount against the restored session; it returns an empty array only if the
- *   session is genuinely absent or expired.
+ *                return shape { sessions, loading, error } (retry was added
+ *                alongside) or the query order.
  */
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useCallback, useEffect, useState } from 'react'
+import { sampleSessions } from '../data/sampleData'
+import { getDashboard } from '../lib/api'
+
+const USE_API = import.meta.env.VITE_USE_V1_API === 'true'
+
+// /v1/dashboard also lists sessions with no finished reading (assigned, failed);
+// their miscue counts are null, and they must not count towards stats or charts.
+function hasReadingResult(session) {
+  return session.correct != null
+}
+
+// Maps a /v1/dashboard row to the session row shape documented above.
+function toSessionRow(session) {
+  const level = session.reading_level
+  return {
+    ...session,
+    id: session.session_id, // /history/:id
+    session_timestamp: session.completed_at ?? session.assigned_at,
+    reading_level: level && level[0].toUpperCase() + level.slice(1).toLowerCase(),
+  }
+}
 
 export function useSessionHistory() {
-  const [sessions, setSessions] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [sessions, setSessions] = useState(USE_API ? [] : sampleSessions)
+  const [loading, setLoading] = useState(USE_API)
   const [error, setError] = useState(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    async function fetchSessions() {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .order('session_timestamp', { ascending: true })
-      if (error) setError(error)
-      else setSessions(data)
-      setLoading(false)
-    }
-    fetchSessions()
-  }, [])
+    if (!USE_API) return
+    let cancelled = false
 
-  return { sessions, loading, error }
+    async function load() {
+      setLoading(true)
+      setError(null)
+      try {
+        const dashboard = await getDashboard()
+        if (cancelled) return
+        // A backend not yet updated may still send the older recent_sessions shape.
+        if (!Array.isArray(dashboard.sessions)) throw new Error('Dashboard response has no sessions')
+        setSessions(dashboard.sessions.filter(hasReadingResult).map(toSessionRow))
+      } catch (err) {
+        if (!cancelled) setError(err)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [attempt])
+
+  const retry = useCallback(() => setAttempt((n) => n + 1), [])
+
+  return { sessions, loading, error, retry }
 }

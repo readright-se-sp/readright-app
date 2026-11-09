@@ -1,3 +1,6 @@
+import { SkyCardPage } from '../ui/SkyCardPage'
+import { SOFT_PRIMARY } from '../ui/stickerStyles'
+
 /**
  * PermissionDenied — recovery screen when the camera/microphone could not be
  * started (GO1 'denied' state). One screen whose guidance switches on the
@@ -7,55 +10,57 @@
  * never colour alone. Copy is plain, age-appropriate, and always ends with a
  * concrete action the learner can take.
  *
+ * Sticker style like /dashboard, on the same white sky card as /pre-session.
+ *
  * @param {{ platform: 'ios'|'android'|'other', errorKind: string|null, onRetry: () => void }} props
  */
 export function PermissionDenied({ platform, errorKind, onRetry }) {
   const content = getContent(errorKind, platform)
 
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-page px-4 py-8 font-display">
-      <div className="w-full max-w-[360px]">
-        <div className="flex flex-col items-center rounded-[24px] border-2 border-card-border bg-white px-8 pt-10 pb-8 text-center shadow-card">
-          {/* Warning illustration — amber background + icon, not colour alone */}
-          <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-[#fdf0d6] text-amber">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10" />
-              <line x1="1" y1="1" x2="23" y2="23" />
-            </svg>
-          </div>
-
-          <h1 className="text-[22px] font-extrabold leading-[28px] text-ink">
-            {content.title}
-          </h1>
-
-          {content.steps ? (
-            <ol className="mt-4 w-full list-decimal space-y-2 pl-6 text-left text-[16px] font-normal leading-[24px] text-ink-soft">
-              {content.steps.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          ) : (
-            <p className="mt-3 text-[16px] font-normal leading-[24px] text-ink-soft">
-              {content.message}
-            </p>
-          )}
-
-          {content.note && (
-            <p className="mt-4 w-full rounded-[12px] bg-card px-4 py-3 text-left text-[14px] leading-[20px] text-ink-muted">
-              {content.note}
-            </p>
-          )}
-
-          <button
-            type="button"
-            onClick={onRetry}
-            className="mt-8 flex min-h-[44px] w-full items-center justify-center gap-2 rounded-full bg-brand py-4 text-[18px] font-bold leading-[24px] text-white shadow-[0px_4px_0px_#871f1a]"
-          >
-            Try Again
-          </button>
-        </div>
+    <SkyCardPage className="items-center text-center">
+      {/* Warning illustration — crossed-out camera on yellow, not colour alone */}
+      <div className="relative mb-3 flex size-20 items-center justify-center rounded-full bg-shelf-card text-result-olive [@media(max-height:680px)]:size-14">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10" />
+          <line x1="1" y1="1" x2="23" y2="23" />
+        </svg>
       </div>
-    </div>
+
+      <h1 className="text-[26px] font-black leading-tight text-level-ink">
+        {content.title}
+      </h1>
+
+      {content.steps ? (
+        <ol className="mt-4 flex w-full flex-col gap-2.5 text-left">
+          {content.steps.map((step, i) => (
+            <li key={i} className="flex items-center gap-3 rounded-2xl bg-sticker px-3 py-2 text-base font-bold leading-snug text-level-ink shadow-cream-button">
+              <span aria-hidden="true" className="flex size-8 flex-none items-center justify-center rounded-full bg-cta text-base font-black">
+                {i + 1}
+              </span>
+              <span className="min-w-0">
+                <span className="sr-only">Step {i + 1}: </span>
+                {step}
+              </span>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-2.5 text-[17px] font-bold leading-[1.45] text-level-muted">
+          {content.message}
+        </p>
+      )}
+
+      {content.note && (
+        <p className="mt-4 w-full rounded-2xl bg-shelf-card px-4 py-3 text-left text-[15px] font-bold leading-snug text-level-ink shadow-ledge-yellow">
+          {content.note}
+        </p>
+      )}
+
+      <button type="button" onClick={onRetry} className={`${SOFT_PRIMARY} mt-5 min-h-14 px-4 text-xl`}>
+        Try Again
+      </button>
+    </SkyCardPage>
   )
 }
 

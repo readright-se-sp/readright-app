@@ -1,77 +1,169 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+// PrePermissionScreen.jsx — "Before we start!" (/pre-session).
+// Explains what will happen, then asks for camera + mic. This is the one place
+// the learner turns the devices on; /quality-check only runs the GO1 checks.
+// Permission state comes from useMediaStream, so the native prompt still only
+// fires after the learner taps (explanation-before-prompt).
+// Sticker style like /dashboard: soft step cards with a same-colour ledge, on the
+// white sky card (SkyCardPage).
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useMediaStream } from '../hooks/useMediaStream'
+import { SkyCardPage } from '../components/ui/SkyCardPage'
+import { SOFT_PRIMARY } from '../components/ui/stickerStyles'
+import { Star } from '../components/dashboard/DashboardParts'
 
-const BEIGE = '#FAF3EE'
-const RED = '#C0392B'
-const TEXT = '#1A1008'
-const TEXT_MUTED = '#8B7355'
-const BORDER = '#E8DDD4'
+// Step icons: all solid, in the card's text colour.
+const MicIcon = (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="8" y="2" width="8" height="13" rx="4" />
+    <path d="M5 11a7 7 0 0 0 14 0M12 18v3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+  </svg>
+)
+
+const CameraIcon = (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <rect x="1.5" y="5.5" width="14.5" height="13" rx="3.5" />
+    <path d="m17.5 10.5 5-3v9l-5-3z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+  </svg>
+)
+
+const StarIcon = (
+  <span aria-hidden="true" className="relative size-7">
+    <Star className="inset-0 size-7" />
+  </span>
+)
+
+// Each step: its card fill and ledge, the numbered dot, the text colour and an icon.
+const STEPS = [
+  { n: 1, title: 'Read a story out loud', body: 'Our mic will listen to you', icon: MicIcon,
+    card: 'bg-shelf-card shadow-ledge-yellow', dot: 'bg-cta text-level-ink', ink: 'text-result-olive' },
+  { n: 2, title: 'Show us how you read', body: 'Our camera will watch', icon: CameraIcon,
+    card: 'bg-result-blue shadow-ledge-blue', dot: 'bg-tile-blue text-white', ink: 'text-tile-blue-ink' },
+  { n: 3, title: 'See how you did!', body: "We'll show your results", icon: StarIcon,
+    card: 'bg-result-pink shadow-ledge-pink', dot: 'bg-coral text-white', ink: 'text-level-ink' },
+]
+
+// Plain-language recovery copy, keyed by useMediaStream's errorKind.
+const DENIED_HELP = {
+  permission: 'Ask a grown-up to help turn them on in your browser settings, then tap Try again.',
+  inuse: 'Another app may be using your camera. Close it, then tap Try again.',
+  notfound: "We can't find a camera on this device. Try a phone or tablet with a camera.",
+  insecure: 'ReadRight needs a secure (https) link to use your camera. Open it that way, then tap Try again.',
+}
+
+const primaryButton = `${SOFT_PRIMARY} min-h-14 px-4 text-xl`
+
+function OnPill({ children }) {
+  return (
+    <span className="flex items-center gap-1.5 rounded-full bg-result-green px-3 py-1 text-sm font-black text-goal">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="m5 13 4 4L19 7" />
+      </svg>
+      {children}
+    </span>
+  )
+}
 
 export default function PrePermissionScreen() {
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(false)
+  const { state: routeState } = useLocation()
+  const { permissionStatus, errorKind, requestStream, retry } = useMediaStream()
 
-  async function handleContinue() {
-    setLoading(true)
+  function handleLetsGo() {
     const isFirstSession = !localStorage.getItem('rr_onboarding_seen')
     localStorage.setItem('rr_onboarding_seen', 'true')
-    try {
-        const s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-        // We only wanted to trigger the grant — release the device immediately so
-        // /quality-check can cleanly auto-acquire (a held stream causes 'in use').
-        s.getTracks().forEach((t) => t.stop())
-    } catch (err) {
-        console.warn('Permission denied or unavailable:', err)
-    }
-    navigate('/quality-check', { state: { isFirstSession } })
-    }
+    // Leaving unmounts useMediaStream, which releases the devices so
+    // /quality-check can re-acquire them without an "in use" error.
+    navigate('/quality-check', { state: { isFirstSession, devicesReady: true, passageGrade: routeState?.passageGrade } })
+  }
 
   return (
-    <div style={{ minHeight: '100vh', background: BEIGE, display: 'flex', flexDirection: 'column', maxWidth: 480, margin: '0 auto', fontFamily: "'Georgia', serif" }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, background: '#fff' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: RED, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 16 }}>R</div>
-          <span style={{ fontWeight: 700, fontSize: 18, color: TEXT }}>ReadRight</span>
-        </div>
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', color: TEXT_MUTED, fontFamily: 'system-ui, sans-serif' }}>SESSION CHECK</span>
-      </header>
+    <SkyCardPage
+      title="Before we start!"
+      subtitle={permissionStatus !== 'denied' && "Here's what will happen"}
+      onExit={() => navigate('/dashboard')}
+      // Grows with the screen up to 680px, with the spare height going between its sections.
+      className={permissionStatus === 'denied' ? '' : 'min-h-[min(calc(100dvh-1rem-env(safe-area-inset-top)),680px)] justify-between'}
+    >
+      {/* The fix-it message takes their place, so the card still fits one screen. */}
+      {permissionStatus !== 'denied' && (
+        <ol className="relative mt-3 flex w-full flex-col gap-3 [@media(max-height:680px)]:gap-2.5">
+          {STEPS.map(({ n, title, body, icon, card, dot, ink }) => (
+            <li key={n} className={`flex items-center gap-2.5 rounded-3xl px-3 py-3 sm:gap-3.5 sm:px-4 [@media(max-height:680px)]:py-2.5 ${card} ${ink}`}>
+              <span
+                aria-hidden="true"
+                className={`flex size-10 flex-none items-center justify-center rounded-full text-[20px] font-black ${dot}`}
+              >
+                {n}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[17px] font-black leading-tight">{title}</p>
+                <p className="text-base font-bold">{body}</p>
+              </div>
+              <span className="flex flex-none">{icon}</span>
+            </li>
+          ))}
+        </ol>
+      )}
 
-      <div style={{ flex: 1, padding: '32px 20px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>📖</div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: TEXT, margin: '0 0 8px' }}>Before we start</h1>
-          <p style={{ fontSize: 15, color: TEXT_MUTED, margin: 0, lineHeight: 1.6, fontFamily: 'system-ui, sans-serif' }}>
-            Let's make sure everything is ready so ReadRight can check your reading.
+      <div className="mt-3 w-full" aria-live="polite">
+        {permissionStatus === 'checking' && (
+          <p className="py-4 text-center text-base font-bold text-level-muted">Getting ready…</p>
+        )}
+
+        {permissionStatus === 'pending' && (
+          <button type="button" onClick={requestStream} className={primaryButton}>
+            Turn on camera &amp; mic
+          </button>
+        )}
+
+        {permissionStatus === 'requesting' && (
+          <p className="rounded-2xl bg-sticker px-4 py-3.5 text-center text-base font-bold text-level-ink shadow-cream-button">
+            Tap <b className="font-black">Allow</b> when your device asks
           </p>
-        </div>
+        )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {[
-            { icon: '📋', title: 'What ReadRight does', body: 'ReadRight will check your environment and record you reading a short passage aloud. An AI will then analyse your reading and show you your results.' },
-            { icon: '🎤', title: 'Why we need your microphone', body: 'Your microphone records your voice so the AI can hear how you read each word.' },
-            { icon: '📷', title: 'Why we need your camera', body: 'Your camera helps us check your reading posture and habits, like whether you use your finger to follow the text.' },
-            { icon: '🔒', title: 'What happens after', body: 'Your recording is only used to analyse this reading session. It is not saved or shared.' },
-          ].map(({ icon, title, body }) => (
-            <div key={title} style={{ background: '#fff', borderRadius: 12, border: `1px solid ${BORDER}`, padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 22, flexShrink: 0 }}>{icon}</span>
+        {permissionStatus === 'granted' && (
+          <>
+            <div className="flex justify-center gap-2">
+              <OnPill>Mic on</OnPill>
+              <OnPill>Camera on</OnPill>
+            </div>
+            <button type="button" onClick={handleLetsGo} className={`mt-3.5 ${primaryButton}`}>
+              Let&apos;s go!
+            </button>
+          </>
+        )}
+
+        {permissionStatus === 'denied' && (
+          <>
+            <div role="alert" className="flex gap-3 rounded-3xl bg-result-pink px-4 py-3.5 text-left shadow-ledge-pink">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="mt-0.5 flex-none text-brand">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
               <div>
-                <p style={{ fontSize: 14, fontWeight: 700, color: TEXT, margin: '0 0 4px', fontFamily: 'system-ui, sans-serif' }}>{title}</p>
-                <p style={{ fontSize: 13, color: TEXT_MUTED, margin: 0, lineHeight: 1.55, fontFamily: 'system-ui, sans-serif' }}>{body}</p>
+                <p className="text-base font-black text-ink">We need your camera &amp; mic to start</p>
+                <p className="mt-0.5 text-base font-semibold text-ink-soft">
+                  {DENIED_HELP[errorKind] ?? 'We could not turn them on. Tap Try again.'}
+                </p>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+            <button type="button" onClick={retry} className={`mt-3.5 ${primaryButton}`}>
+              Try again
+            </button>
+          </>
+        )}
 
-      <div style={{ padding: '12px 20px 32px' }}>
+        {/* Always offered, so the learner can leave without starting. */}
         <button
-          onClick={handleContinue}
-          disabled={loading}
-          style={{ width: '100%', padding: 16, background: loading ? '#D9C5B8' : RED, color: '#fff', border: 'none', borderRadius: 50, fontSize: 17, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'system-ui, sans-serif' }}
+          type="button"
+          onClick={() => navigate('/dashboard')}
+          className="mt-2.5 flex min-h-14 w-full items-center justify-center rounded-2xl border-[3px] border-cream-edge bg-cream-button px-4 text-lg font-black text-level-ink shadow-cream-button active:translate-y-0.5 active:shadow-none"
         >
-          {loading ? 'Starting...' : 'Got it — Continue'}
+          Back to my dashboard
         </button>
       </div>
-    </div>
+    </SkyCardPage>
   )
 }

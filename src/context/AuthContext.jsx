@@ -8,7 +8,7 @@ import { useAuth } from '../hooks/useAuth'
  * component reads the shared value via useAuthContext(). This avoids each
  * consumer opening its own auth subscription.
  *
- * Provided value: { session, user, signIn, loading, signOut }.
+ * Provided value: { session, user, signIn, signUp, loading, signOut }.
  */
 const AuthContext = createContext(null)
 

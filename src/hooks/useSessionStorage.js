@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { saveSessionRecord } from '../lib/supabase'
+
+// TODO(backend): nothing is saved for now — replace with the backend call. The
+// frontend must not write to Supabase directly.
+const saveSessionRecord = async () => ({ success: true })
 
 /**
- * useSessionStorage — persists one completed session to Supabase (RR-041 · REA-26).
+ * useSessionStorage — persists one completed session (RR-041 · REA-26).
  *
- * Wraps the pure saveSessionRecord (lib/supabase.js, which owns the INSERT and
- * the 3x exponential-backoff retry) with the React-side concerns: a once-guard
- * so StrictMode's double-invoked effect can't INSERT twice, and a status the
- * results page can switch on. The save never blocks rendering — results show
- * regardless of the outcome (NFR-R1).
+ * Wraps saveSessionRecord with the React-side concerns: a once-guard so
+ * StrictMode's double-invoked effect can't save twice, and a status the results
+ * page can switch on. The save never blocks rendering — results show regardless
+ * of the outcome (NFR-R1).
  *
  * Runs once, when both `result` and `passageId` are first available.
  *

@@ -20,10 +20,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 function pickMimeType() {
   if (typeof MediaRecorder === 'undefined') return ''
-  // iOS Safari records MP4; Chrome/Android use WebM.
-  return MediaRecorder.isTypeSupported('video/mp4')
-    ? 'video/mp4'
-    : 'video/webm;codecs=vp8,opus'
+  // Prefer WebM everywhere; fall back to MP4 only on browsers that can't
+  // record WebM (older iOS Safari).
+  return MediaRecorder.isTypeSupported('video/webm;codecs=vp8,opus')
+    ? 'video/webm;codecs=vp8,opus'
+    : 'video/mp4'
 }
 
 export function useMediaRecorder(stream, { maxDurationMs } = {}) {
