@@ -37,7 +37,7 @@ export function SkyCardPage({ title, subtitle, lumi = true, circle = lumi, onExi
 
         {title && (
           <div className="relative flex flex-col items-center text-center">
-            {lumi && <img src="/mascot-head-icon.svg" alt="" className="mb-1.5 h-[72px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-[52px]" />}
+            {lumi && <img src="/images/mascot/mascot-head-icon.svg" alt="" className="mb-1.5 h-[72px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-[52px]" />}
             <h1 className="text-[28px] font-black leading-tight text-level-ink">{title}</h1>
             {subtitle && <p className="text-[17px] font-bold text-coral-ink">{subtitle}</p>}
           </div>

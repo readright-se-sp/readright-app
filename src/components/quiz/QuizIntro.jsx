@@ -8,7 +8,7 @@ export function QuizIntro({ storyTitle, onStart, onExit }) {
     <QuizPage circle onExit={onExit} className="min-h-[min(calc(100dvh-1rem-env(safe-area-inset-top)),540px)]">
       <QuizCard className="relative items-center justify-between text-center">
         <div className="flex flex-col items-center">
-          <img src="/mascot-head-icon.svg" alt="" className="mt-4 h-[72px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-[60px]" />
+          <img src="/images/mascot/mascot-head-icon.svg" alt="" className="mt-4 h-[72px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-[60px]" />
           <h1 className="relative mt-5 whitespace-nowrap text-[38px] font-black leading-[1.1] text-level-pill">
             <Star className="-left-5 -top-3 size-6 text-cta motion-safe:animate-glitter" />
             Great reading!

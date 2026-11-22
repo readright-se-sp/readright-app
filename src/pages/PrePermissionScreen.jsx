@@ -81,8 +81,9 @@ export default function PrePermissionScreen() {
       title="Before we start!"
       subtitle={permissionStatus !== 'denied' && "Here's what will happen"}
       onExit={() => navigate('/dashboard')}
-      // Grows with the screen up to 680px, with the spare height going between its sections.
-      className={permissionStatus === 'denied' ? '' : 'min-h-[min(calc(100dvh-1rem-env(safe-area-inset-top)),680px)] justify-between'}
+      // Pops in when it opens (skipped if the learner turned motion off). Grows with
+      // the screen up to 680px, with the spare height going between its sections.
+      className={`motion-safe:animate-pop-in ${permissionStatus === 'denied' ? '' : 'min-h-[min(calc(100dvh-1rem-env(safe-area-inset-top)),680px)] justify-between'}`}
     >
       {/* The fix-it message takes their place, so the card still fits one screen. */}
       {permissionStatus !== 'denied' && (

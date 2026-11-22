@@ -83,7 +83,7 @@ export default function ReadingDetailsPage() {
             role="alert"
             className="mt-2 flex flex-col items-center gap-3.5 rounded-3xl border-2 border-card-border bg-peach px-5 py-6 text-center shadow-card"
           >
-            <img src="/mascot-reading.svg" alt="" className="w-[76px]" />
+            <img src="/images/mascot/mascot-reading.svg" alt="" className="w-[76px]" />
             <h1 className="text-[22px] font-black">Your reading didn’t load</h1>
             <p className="max-w-[300px] text-[17px] leading-[1.45] text-ink-soft">
               We couldn’t load this reading. Check your internet and tap Try again.
@@ -115,7 +115,7 @@ export default function ReadingDetailsPage() {
 
         {!error && !loading && !result && (
           <section className="mt-2 flex flex-col items-center gap-3.5 rounded-3xl border-[3px] border-shelf-edge bg-shelf-card px-5 py-7 text-center shadow-shelf-card">
-            <img src="/mascot-reading.svg" alt="" className="w-24" />
+            <img src="/images/mascot/mascot-reading.svg" alt="" className="w-24" />
             <h1 className="max-w-[290px] text-[22px] font-black leading-tight text-balance text-level-ink">We couldn’t find this reading</h1>
             <p className="max-w-[300px] text-[17px] text-level-muted">Go back to your past readings and pick a story to see its results.</p>
             <button

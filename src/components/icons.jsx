@@ -3,13 +3,13 @@
  * Keeps page/section markup readable and icons reusable across the app.
  */
 
-// Brand mark — the mascot's head (public/mascot-head-icon.svg). Used app-wide
+// Brand mark — the mascot's head (public/images/mascot/mascot-head-icon.svg). Used app-wide
 // (AppHeader + the session/quality headers). Decorative: the "ReadRight" text
 // beside it carries the name, so alt is empty.
 export function LogoMark({ size = 32 }) {
   return (
     <img
-      src="/mascot-head-icon.svg"
+      src="/images/mascot/mascot-head-icon.svg"
       alt=""
       width={size}
       height={size}
@@ -23,6 +23,16 @@ export function CheckIcon() {
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 12.5l4.5 4.5L19 7.5" />
+    </svg>
+  )
+}
+
+/** Lightbulb: "here's a tip" — marks a habit to practice (not a reward, not an error). */
+export function LightbulbIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2.5a6.5 6.5 0 0 0-4 11.6c.8.6 1 1.4 1 2.4h6c0-1 .2-1.8 1-2.4A6.5 6.5 0 0 0 12 2.5Z" />
+      <path d="M9.5 19.5h5M10.5 22h3" />
     </svg>
   )
 }

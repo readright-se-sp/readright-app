@@ -8,11 +8,13 @@ const GINGHAM =
 
 // Extra sparkles on an Independent score, in the card's open space. They take
 // turns (each waits 0.25s more than the one before) and every other one spins.
+// The delays need the same motion-safe: prefix as the animation — unprefixed,
+// motion-safe:animate-* comes later in the CSS and resets them to 0.
 const SPARKLES = [
-  'right-[34%] top-2.5 size-3.5 text-white motion-safe:animate-glitter-spin [animation-delay:0.5s]',
-  'right-2 bottom-2 size-5 text-cta motion-safe:animate-glitter [animation-delay:0.75s]',
-  'right-[30%] bottom-1 size-3 text-white motion-safe:animate-glitter-spin [animation-delay:1.25s]',
-  'right-[18%] top-3 size-4 text-cta motion-safe:animate-glitter [animation-delay:1.5s]',
+  'right-[34%] top-2.5 size-3.5 text-white motion-safe:animate-glitter-spin motion-safe:[animation-delay:0.5s]',
+  'right-2 bottom-2 size-5 text-cta motion-safe:animate-glitter motion-safe:[animation-delay:0.75s]',
+  'right-[30%] bottom-1 size-3 text-white motion-safe:animate-glitter-spin motion-safe:[animation-delay:1.25s]',
+  'right-[18%] top-3 size-4 text-cta motion-safe:animate-glitter motion-safe:[animation-delay:1.5s]',
 ]
 
 /** A four-point sparkle (decoration only). */
@@ -32,17 +34,20 @@ function Sparkle({ className }) {
  * word-recognition score in a ringed circle. The level is always named too
  * (never colour alone).
  *
- * An Independent score's ring is a turning gold gradient, and its stars and
- * sparkles glitter (they only move when motion is allowed).
+ * The two stars glitter on every level. An Independent score also gets a
+ * turning gold ring and extra sparkles, so it still feels like the biggest
+ * celebration. Everything only moves when motion is allowed.
  */
 export function ReadingScoreCard({ score, readingLevel }) {
   const levelName = READING_LEVELS[readingLevel] ? readingLevel : 'Instructional'
   const level = READING_LEVELS[levelName]
   const celebrate = levelName === 'Independent'
-  const glitter = celebrate ? 'motion-safe:animate-glitter' : ''
+  const glitter = 'motion-safe:animate-glitter'
 
   return (
-    <section className={`@container relative flex flex-col items-start gap-2.5 overflow-clip rounded-3xl p-4 ${level.tile} ${level.tileLedge} ${GINGHAM}`}>
+    // `isolate` keeps the star's z-10 inside this card, so it can't rise above
+    // a sticky navbar (e.g. on /history/:id) when the page scrolls under it.
+    <section className={`@container relative isolate flex flex-col items-start gap-2.5 overflow-clip rounded-3xl p-4 ${level.tile} ${level.tileLedge} ${GINGHAM}`}>
       <Star className={`right-2 top-1.5 z-10 size-9 text-cta drop-shadow-[0_2px_0_rgba(0,0,0,0.15)] ${glitter} motion-safe:[animation-delay:0.25s]`} />
       <span aria-hidden="true" className="pointer-events-none absolute right-[26%] top-5 size-2.5 rounded-full bg-cta" />
       <Star className={`bottom-2 right-[36%] size-5 text-white ${glitter} motion-safe:[animation-delay:1s]`} />

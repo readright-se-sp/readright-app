@@ -12,6 +12,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,400;0,6..12,600;0,6..12,700;0,6..12,800&display=swap');
 @import "tailwindcss";
 
+/* Don't scan public/ for class names — it only holds images, sounds and the
+   manifest. Scanning it made Vite watch those files through this stylesheet,
+   so moving or deleting one broke the dev server ("ENOENT … public/…"). */
+@source not "../public";
+
 /* Screens with height to spare (roomier spacing on the pre-reading cards). */
 @custom-variant tall (@media (min-height: 760px));
 
@@ -23,6 +28,7 @@
  */
 @theme {
   --color-brand:       #a5352d;
+  --color-lumi:        #ec4545; /* Lumi's body red, from the mascot art — learner avatar */
   --color-goal:        #36663e;
   --color-amber:       #e6a817;
   --color-link-orange: #e06500; /* bright orange text links on white (3.5:1) */
@@ -160,7 +166,9 @@
   --color-result-pink:     #ffe2e0;
   --color-result-green:    #e3f4da;
   --color-result-face-blue:  #a8c0f5;
-  --color-result-face-green: #9dd889;
+  --color-result-face-green: #62bd63; /* Super Reader face: deep enough for the yellow star eyes (≈1.8:1) */
+  --color-result-face-star:  #ffe066; /* Super Reader star eyes */
+  --color-result-face-mouth: #3a120c; /* Super Reader open mouth, dark enough to read on the green */
   --color-result-olive:    #6b4708; /* text on the yellow cards (≈8:1) */
   /* Result card ledges: a darker shade of each card's own fill (no outline). */
   --shadow-ledge-green:    0 5px 0 #b3dba0; /* bg-result-green */
@@ -218,6 +226,76 @@
     0%   { transform: scale(0.85); opacity: 0.7; }
     100% { transform: scale(1.35); opacity: 0; }
   }
+  /* Cards that pop in when they open (pre-session "Before we start!", sign-out
+     dialog, story level picker, results card) — grow past full size, then settle */
+  --animate-pop-in: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  @keyframes pop-in {
+    0%   { transform: scale(0.85); opacity: 0; }
+    60%  { transform: scale(1.03); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  /* Dashboard cards float in (fade + rise) when the page opens, and float out
+     (fade + drift up) before it navigates away. Each card's stagger comes from
+     a separate motion-safe:[animation-delay:…] class — a delay can't live in
+     this token as a var(), since it's resolved once on :root. */
+  --animate-float-in: float-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  @keyframes float-in {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  --animate-float-out: float-out 0.22s ease-in both;
+  @keyframes float-out {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-16px); }
+  }
+
+  /* Dashboard idle animations: the streak flame flickers, the book turns a
+     page, the face sticker blinks. Used with transform-box: fill-box (or
+     view-box for the page) so each shape moves around its own base/spine. */
+  /* The tip sways the same amount right (25%) and left (75%), stretching
+     taller as it leans and squatting a little in between. */
+  --animate-flame: flame 1.6s ease-in-out infinite;
+  /* Same sway a quarter-beat later, for the flame's yellow middle so it ripples.
+     The delay lives here, not in an [animation-delay:…] class — animate-*
+     sets the whole animation shorthand, which resets a separate delay to 0. */
+  --animate-flame-late: flame 1.6s ease-in-out -0.4s infinite;
+  @keyframes flame {
+    0%, 100% { transform: scale(1, 1) skewX(0deg); }
+    25%      { transform: scale(0.97, 1.05) skewX(-4deg); }
+    50%      { transform: scale(1.02, 0.98) skewX(0deg); }
+    75%      { transform: scale(0.97, 1.05) skewX(4deg); }
+  }
+  /* The turning page starts on top of the right page (looking the same), flips
+     over the spine onto the left page, rests, then fades out to start again. */
+  --animate-page-turn: page-turn 5s ease-in-out infinite;
+  @keyframes page-turn {
+    0%        { transform: scaleX(1); opacity: 0; }
+    6%        { transform: scaleX(1); opacity: 1; }
+    40%       { transform: scaleX(-1); opacity: 1; }
+    80%       { transform: scaleX(-1); opacity: 1; }
+    90%, 100% { transform: scaleX(-1); opacity: 0; }
+  }
+  /* "eye-blink", not "blink" — that one is the recording dot's flash (below). */
+  --animate-eye-blink: eye-blink 4s ease-in-out infinite;
+  /* Face sticker's pupils glance left, back, then up-right, back — quick darts
+     with holds in between. A 6s loop against the 4s blink, so the two don't
+     line up the same way every time. Offsets are in the SVG's own units and
+     keep the pupils inside the whites. */
+  --animate-eye-look: eye-look 6s ease-in-out infinite;
+  @keyframes eye-look {
+    0%, 15%   { transform: translate(0, 0); }
+    20%, 40%  { transform: translate(-3px, -0.5px); }
+    45%, 60%  { transform: translate(0, 0); }
+    65%, 82%  { transform: translate(1.5px, -1.5px); }
+    87%, 100% { transform: translate(0, 0); }
+  }
+  /* Half a cycle later — the streak flame's eyes, so they don't blink with the face sticker's. */
+  --animate-eye-blink-late: eye-blink 4s ease-in-out -2s infinite;
+  @keyframes eye-blink {
+    0%, 90%, 100% { transform: scaleY(1); }
+    94%           { transform: scaleY(0.1); }
+  }
+
   --animate-dot-bounce: dot-bounce 1.2s ease-in-out infinite;
   @keyframes dot-bounce {
     0%, 80%, 100% { opacity: 0.25; transform: translateY(0); }
@@ -239,6 +317,12 @@
     0%   { transform: scale(0.5) rotate(0deg); }
     50%  { transform: scale(1.35) rotate(180deg); }
     100% { transform: scale(0.5) rotate(360deg); }
+  }
+  /* Super Reader face: the star eyes gently grow and shrink. */
+  --animate-star-pulse: star-pulse 1.6s ease-in-out infinite;
+  @keyframes star-pulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.15); }
   }
 
   /* Dashboard tricky words: sound bars on the "Playing" button */
@@ -263,4 +347,30 @@
   --shadow-card: 0px 4px 0px #e6dcc3;
 
   --font-display: 'Nunito Sans', sans-serif;
+}
+
+/* Pointing-hand cursor on everything clickable, so it's clear what can be
+   tapped (Tailwind v4 leaves buttons on the plain arrow). Disabled controls
+   show "not allowed" instead. Utilities like cursor-default still win. */
+@layer base {
+  button,
+  a[href],
+  summary,
+  select,
+  label[for],
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'],
+  [role='button'],
+  [role='menuitem'],
+  [role='tab'],
+  [role='option'],
+  [role='switch'] {
+    cursor: pointer;
+  }
+
+  :disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
 }

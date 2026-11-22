@@ -15,6 +15,10 @@ export const SOFT_PRIMARY =
 export const SOFT_SECONDARY =
   'flex w-full items-center justify-center rounded-2xl border-[3px] border-cream-edge bg-cream-button font-black text-level-ink shadow-cream-button active:translate-y-0.5 active:shadow-none disabled:opacity-60'
 
+/** White button with a soft pink outline and red words, for a careful "leave" choice (Sign out). */
+export const SOFT_LEAVE =
+  'flex w-full items-center justify-center rounded-2xl border-[3px] border-word-pink bg-white font-black text-coral-ink shadow-ledge-pink active:translate-y-1 active:shadow-none disabled:opacity-60'
+
 /** SkyCardPage height for the camera screens: all of a phone, capped on bigger screens. */
 export const SKY_CARD_TALL =
   'min-h-[calc(100dvh-1rem-env(safe-area-inset-top))] sm:min-h-[min(calc(100dvh-1rem-env(safe-area-inset-top)),780px)]'

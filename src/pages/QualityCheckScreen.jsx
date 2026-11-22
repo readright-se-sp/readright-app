@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useMediaStream } from '../hooks/useMediaStream'
 import { useQualityGate } from '../hooks/useQualityGate'
+import { useMuteTapSound } from '../hooks/useTapSound'
 import { detectPlatform } from '../utils/platform'
 import { LiveBadge } from '../components/quality/CameraPreview'
 import { PermissionDenied } from '../components/quality/PermissionDenied'
@@ -108,6 +109,8 @@ export default function QualityCheckScreen() {
   const { stream, audioTrack, permissionStatus, errorKind, requestStream, retry } = useMediaStream()
 
   const { allPassed, checks } = useQualityGate({ audioTrack, videoElement: videoEl })
+  // No tap sounds on this page — the noise check is listening the whole time.
+  useMuteTapSound(true)
 
   // Camera + mic are turned on in /pre-session ("Before we start!"), not here.
   // Arriving from there, the learner already tapped Allow, so re-acquire

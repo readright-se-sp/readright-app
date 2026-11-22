@@ -28,6 +28,7 @@ import { useMediaRecorder } from '../hooks/useMediaRecorder'
 import { useAnalyzeSubmit } from '../hooks/useAnalyzeSubmit'
 import { useRecordingMonitor } from '../hooks/useRecordingMonitor'
 import { useCameraCheck } from '../hooks/useCameraCheck'
+import { SOUNDS, useMuteTapSound, useSoundEffect } from '../hooks/useTapSound'
 import { useCameraMorph } from '../hooks/useCameraMorph'
 import { useStoryBlock } from '../hooks/useStoryBlock'
 import { detectPlatform } from '../utils/platform'
@@ -82,6 +83,10 @@ export default function SessionScreen() {
   const { status, result, submit, reset } = useAnalyzeSubmit()
 
   const isRecording = recordingState === 'recording'
+  // No tap sounds while recording — the mic would pick them up.
+  useMuteTapSound(isRecording)
+  // Download the results cheer now, so it's ready the moment /results opens (played there).
+  useSoundEffect(SOUNDS.resultsReveal)
   const { cameraRef, storyRef } = useCameraMorph(isRecording)
 
   // The live <video> from CameraPreview, kept in state so the monitor's check
@@ -377,7 +382,7 @@ export default function SessionScreen() {
         {storyHidden ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
             <span className="flex size-24 items-center justify-center rounded-full bg-white [@media(max-height:680px)]:size-16">
-              <img src="/mascot-head-icon.svg" alt="" className="h-[64px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-11" />
+              <img src="/images/mascot/mascot-head-icon.svg" alt="" className="h-[64px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-11" />
             </span>
             <h2 className="text-[24px] font-black leading-tight text-level-ink">Today's Story</h2>
             <p className="text-base font-bold text-level-ink text-pretty">Your story is ready! Tap Start reading to see it</p>
@@ -414,7 +419,7 @@ export default function SessionScreen() {
                       it comes back exactly where the learner left off. */}
                   {storyBlocked && (
                     <div role="alert" className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-shelf-card px-4 text-center motion-safe:animate-fade-in">
-                      <img src="/mascot-head-icon.svg" alt="" className="h-16 w-auto [@media(max-height:680px)]:h-11" />
+                      <img src="/images/mascot/mascot-head-icon.svg" alt="" className="h-16 w-auto [@media(max-height:680px)]:h-11" />
                       <p className="text-xl font-black text-level-ink">Oops!</p>
                       <p className="text-base font-bold text-level-ink text-pretty">Move back into the circle so I can see you</p>
                     </div>
@@ -459,6 +464,8 @@ export default function SessionScreen() {
             type="button"
             onClick={handleStart}
             disabled={!passage}
+            // Recording starts on this tap, so the sound would land in the take.
+            data-no-tap-sound
             className={`mt-3.5 min-h-14 gap-2.5 px-4 text-xl ${
               passage
                 ? SOFT_PRIMARY

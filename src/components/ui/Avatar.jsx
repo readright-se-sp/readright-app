@@ -1,6 +1,6 @@
 /**
  * Avatar — learner initial circle.
- * size 'sm' (40px header, brand fill) | 'lg' (96px profile, soft fill).
+ * size 'sm' (40px header, Lumi's red; 20px extra-bold letter so white on that red stays readable) | 'lg' (96px profile, soft fill).
  * For 'lg', pass an optional `badge` node (e.g. the "LVL 4" pill) rendered
  * over the bottom-right corner.
  */
@@ -17,8 +17,8 @@ export default function Avatar({ initial, size = 'sm', badge = null }) {
   }
 
   return (
-    <div className="size-[40px] rounded-full bg-brand border-2 border-white flex items-center justify-center shadow-sm">
-      <span className="text-white text-[18px] font-bold">{initial}</span>
+    <div className="size-[40px] rounded-full bg-lumi border-2 border-white flex items-center justify-center shadow-sm">
+      <span className="text-white text-[20px] font-black">{initial}</span>
     </div>
   )
 }

@@ -15,14 +15,22 @@ function Gingham() {
   )
 }
 
-/** A friendly flame with a face: orange drop, yellow middle, dark eyes, pink cheeks. */
+/**
+ * A friendly flame with a face: orange drop, yellow middle, dark eyes, pink cheeks.
+ * The two flame layers sway evenly left and right from their base, the yellow
+ * middle a quarter-beat behind the orange so it ripples. The face stays put and
+ * the eyes blink every few seconds.
+ */
 function FireBuddy() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 48 48" className="size-14 @[20rem]:size-[68px]">
-      <path d="M25 4c6 8 15 15 15 26a16 16 0 0 1-32 0C8 20 18 13 25 4z" fill="#ff7a3d" />
-      <path d="M24 19c4 4.5 9 8.5 9 14a9 9 0 0 1-18 0c0-5.5 5-9.5 9-14z" fill="#ffd43d" />
-      <circle cx="20.5" cy="32" r="1.7" fill="#2a1a12" />
-      <circle cx="27.5" cy="32" r="1.7" fill="#2a1a12" />
+    <svg aria-hidden="true" viewBox="0 0 48 48" className="size-14 overflow-visible @[20rem]:size-[68px]">
+      <path d="M24 4c6 8 16 15 16 26a16 16 0 0 1-32 0C8 20 18 13 24 4z" fill="#ff7a3d" className="origin-bottom [transform-box:fill-box] motion-safe:animate-flame" />
+      <path d="M24 19c4 4.5 9 8.5 9 14a9 9 0 0 1-18 0c0-5.5 5-9.5 9-14z" fill="#ffd43d" className="origin-bottom [transform-box:fill-box] motion-safe:animate-flame-late" />
+      {/* Blinks like the face sticker's eyes, but half a cycle apart so they don't blink together. */}
+      <g className="origin-center [transform-box:fill-box] motion-safe:animate-eye-blink-late">
+        <circle cx="20.5" cy="32" r="1.7" fill="#2a1a12" />
+        <circle cx="27.5" cy="32" r="1.7" fill="#2a1a12" />
+      </g>
       <ellipse cx="17.5" cy="35.6" rx="2" ry="1.3" fill="#ff8fa3" />
       <ellipse cx="30.5" cy="35.6" rx="2" ry="1.3" fill="#ff8fa3" />
     </svg>

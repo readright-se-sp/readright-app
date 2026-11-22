@@ -105,7 +105,7 @@ export default function HistoryPage() {
         </header>
 
         <section className="flex items-center gap-4 px-1 pb-2 pt-4">
-          <img src="/mascot-reading.svg" alt="" className="w-[72px] shrink-0 motion-safe:animate-lumi-bob" />
+          <img src="/images/mascot/mascot-reading.svg" alt="" className="w-[72px] shrink-0 motion-safe:animate-lumi-bob" />
           {ready && sessions.length > 0 ? (
             <p className="text-[22px] font-black leading-tight text-ink">Pick a story and I’ll show you how you did!</p>
           ) : (
@@ -118,7 +118,7 @@ export default function HistoryPage() {
             role="alert"
             className="flex flex-col items-center gap-3.5 rounded-3xl border-2 border-card-border bg-peach px-5 py-6 text-center shadow-card"
           >
-            <img src="/mascot-reading.svg" alt="" className="w-[76px]" />
+            <img src="/images/mascot/mascot-reading.svg" alt="" className="w-[76px]" />
             <h2 className="text-[22px] font-black">Your readings didn’t load</h2>
             <p className="max-w-[300px] text-[17px] leading-[1.45] text-ink-soft">
               We couldn’t load your past readings. Check your internet and tap Try again.

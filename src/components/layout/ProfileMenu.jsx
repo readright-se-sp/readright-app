@@ -5,10 +5,13 @@ import { useCurrentUser } from '../../hooks/useCurrentUser'
 import { useAuthContext } from '../../context/AuthContext'
 import { useOnClickOutside } from '../../hooks/useOnClickOutside'
 import { SignOutDialog } from './SignOutDialog'
+import { SoundSettings } from './SoundSettings'
+import { SOFT_LEAVE } from '../ui/stickerStyles'
 
 /**
  * ProfileMenu — the header profile icon (avatar) as a tap target that opens a
- * small dropdown with the learner's name + a Sign out action. Sign out then
+ * small dropdown with the learner's name, the sound volume
+ * (SoundSettings) and a Sign out action. Sign out then
  * asks to confirm (SignOutDialog), so a learner can't sign out by accident.
  *
  * Signing out clears the persisted Supabase session; AuthGuard would redirect
@@ -52,20 +55,33 @@ export default function ProfileMenu() {
         <div
           role="menu"
           aria-label="Account"
-          className="absolute right-0 top-full z-30 mt-2 w-56 overflow-hidden rounded-[12px] border border-card-border bg-white shadow-card"
+          className="absolute right-0 top-full z-30 mt-3 flex w-[300px] max-w-[calc(100vw-2rem)] flex-col gap-4 rounded-[28px] bg-cream-button p-3.5 font-display shadow-cream-edge"
         >
-          <div className="px-4 py-3">
-            <p className="truncate text-[15px] font-bold text-ink">{displayName}</p>
-            <p className="truncate text-[12px] text-ink-muted">{user?.email ?? 'Signed in'}</p>
+          {/* Little pointer up at the avatar (centred under the 44px button). */}
+          <span aria-hidden="true" className="absolute -top-2 right-3.5 size-4 rotate-45 rounded-[3px] bg-cream-button" />
+
+          <div className="relative flex items-center gap-3 px-1 pt-1">
+            <span
+              aria-hidden="true"
+              className="flex size-12 flex-none items-center justify-center rounded-full bg-lumi text-[22px] font-black text-white shadow-[0_4px_0_var(--color-brand)]"
+            >
+              {initial}
+            </span>
+            <div className="min-w-0">
+              <p className="truncate text-lg font-black text-ink">{displayName}</p>
+              <p className="truncate text-[15px] font-semibold text-level-muted">{user?.email ?? 'Signed in'}</p>
+            </div>
           </div>
-          <div className="h-px bg-divider" />
+
+          <SoundSettings />
+
           <button
             type="button"
             role="menuitem"
             onClick={askToSignOut}
-            className="flex min-h-[44px] w-full items-center gap-2 px-4 py-3 text-left text-[15px] font-bold text-brand active:bg-black/5"
+            className={`${SOFT_LEAVE} mb-1 min-h-12 gap-2 px-4 text-lg`}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
               <path d="m16 17 5-5-5-5" />
               <path d="M21 12H9" />

@@ -85,11 +85,61 @@ import { PastReadings } from '../components/dashboard/PastReadings'
 import { ComingSoon } from '../components/dashboard/DashboardParts'
 import { COMPREHENSION_FACES, LEVEL_FACES } from '../components/dashboard/dashboardCopy'
 import { DashboardEmpty, DashboardError, DashboardLoading } from '../components/dashboard/DashboardStates'
+import { useExitNavigate } from '../hooks/useExitNavigate'
+
+// Cards float in one after another (70ms apart) and float out quickly with a
+// smaller stagger (25ms). Written out in full so Tailwind can find them. The
+// delays carry motion-safe: like the animation — unprefixed, the animate-*
+// class (which sets the whole shorthand) would reset them to 0.
+const IN_DELAYS = [
+  'motion-safe:[animation-delay:0ms]',
+  'motion-safe:[animation-delay:70ms]',
+  'motion-safe:[animation-delay:140ms]',
+  'motion-safe:[animation-delay:210ms]',
+  'motion-safe:[animation-delay:280ms]',
+  'motion-safe:[animation-delay:350ms]',
+  'motion-safe:[animation-delay:420ms]',
+]
+const OUT_DELAYS = [
+  'motion-safe:[animation-delay:0ms]',
+  'motion-safe:[animation-delay:25ms]',
+  'motion-safe:[animation-delay:50ms]',
+  'motion-safe:[animation-delay:75ms]',
+  'motion-safe:[animation-delay:100ms]',
+  'motion-safe:[animation-delay:125ms]',
+  'motion-safe:[animation-delay:150ms]',
+]
+// Longest float-out (0.22s) + the last card's delay, then navigate.
+const EXIT_MS = 220 + 150
+
+/**
+ * One dashboard card's slot in the float-in / float-out sequence. `order` is
+ * its place from the top (0 = greeting).
+ */
+function Float({ order, leaving, className = '', children }) {
+  const motion = leaving
+    ? `motion-safe:animate-float-out ${OUT_DELAYS[order]}`
+    : `motion-safe:animate-float-in ${IN_DELAYS[order]}`
+  return <div className={`${motion} ${className}`}>{children}</div>
+}
 
 export default function DashboardPage() {
   const history = useSessionHistory()
   const { search } = useLocation()
   const { user } = useCurrentUser()
+  const { leaving, leaveTo } = useExitNavigate(EXIT_MS)
+
+  // Links inside the cards (past readings, "See all my readings") float the
+  // cards out first. Caught here, before React Router's <Link> handles the
+  // click; new-tab clicks (modifier keys) are left alone.
+  function handleClickCapture(e) {
+    const link = e.target instanceof Element ? e.target.closest('a[href]') : null
+    if (!link || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || link.target) return
+    const url = new URL(link.href)
+    if (url.origin !== window.location.origin) return
+    e.preventDefault()
+    leaveTo(url.pathname + url.search)
+  }
 
   // Dev-only preview (npm run dev): /dashboard?sample shows dummy history —
   // see data/sampleDashboard.js. Production builds never use samples.
@@ -103,9 +153,12 @@ export default function DashboardPage() {
 
   return (
     <div className="relative min-h-dvh font-display text-ink sm:py-6">
-      {/* Sky fixed to the screen; the cards scroll over it. */}
-      <SkyBackground fixed />
-      <div className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-4 px-4 pb-8 pt-3 sm:min-h-[calc(100dvh-3rem)]">
+      {/* Same sky + forest as the reading screens, fixed to the screen; the cards scroll over it. */}
+      <SkyBackground fixed forest />
+      <div
+        onClickCapture={handleClickCapture}
+        className="relative mx-auto flex min-h-dvh w-full max-w-[480px] flex-col gap-4 px-4 pb-8 pt-3 sm:min-h-[calc(100dvh-3rem)]"
+      >
         {/* Sticky navbar. Bleeds past the column's px-4/pt-3 so content scrolls
             under a frosted-glass bar. z-10 keeps it below the sticky Start Reading
             bar (z-20), whose story-level picker overlay must cover it. */}
@@ -120,10 +173,11 @@ export default function DashboardPage() {
           <ProfileMenu />
         </header>
 
+        <Float order={0} leaving={leaving}>
         <section className="flex items-center gap-4 px-1 pb-2 pt-4">
           {/* Lumi glows softly (a steady glow when motion is reduced). */}
           <span className="shrink-0 drop-shadow-[0_0_10px_rgb(255_218_140/0.75)] motion-safe:animate-lumi-glow">
-            <img src="/mascot-reading.svg" alt="" className="w-[72px] motion-safe:animate-lumi-bob" />
+            <img src="/images/mascot/mascot-reading.svg" alt="" className="w-[72px] motion-safe:animate-lumi-bob" />
           </span>
           <div className="flex flex-col gap-1">
             <h1 className="text-[30px] font-black leading-[1.1]">{firstName ? `Hi, ${firstName}!` : 'Hi there!'}</h1>
@@ -132,34 +186,39 @@ export default function DashboardPage() {
             </p>
           </div>
         </section>
+        </Float>
 
-        {error && <DashboardError onRetry={history.retry} />}
-        {!error && loading && <DashboardLoading />}
-        {isEmpty && <DashboardEmpty />}
-        {ready && sessions.length > 0 && <Progress sessions={sessions} linkSearch={sample ? search : ''} />}
+        {error && <Float order={1} leaving={leaving}><DashboardError onRetry={history.retry} /></Float>}
+        {!error && loading && <Float order={1} leaving={leaving}><DashboardLoading /></Float>}
+        {isEmpty && <Float order={1} leaving={leaving}><DashboardEmpty /></Float>}
+        {ready && sessions.length > 0 && <Progress sessions={sessions} linkSearch={sample ? search : ''} leaving={leaving} />}
 
         {/* Sticky at the bottom of the screen in every state, so a reading is
-            always one tap away. Must stay last in the column (see StartReadingBar). */}
-        <StartReadingBar />
+            always one tap away. Must stay last in the column (see StartReadingBar).
+            Not animated, so the main button never moves under a finger. */}
+        <StartReadingBar onNavigate={leaveTo} />
       </div>
     </div>
   )
 }
 
 /** Every progress section, for a learner with at least one reading. */
-function Progress({ sessions, linkSearch }) {
+function Progress({ sessions, linkSearch, leaving }) {
   const weeks = lastFourWeeks(sessions)
   const streak = readingStreaks(sessions)
 
   return (
     <>
-      <StreakCard streak={streak.current} />
+      <Float order={1} leaving={leaving}>
+        <StreakCard streak={streak.current} />
+      </Float>
       {/* Two tiles side by side, kept the same height. */}
-      <div className="grid grid-cols-2 items-stretch gap-3">
+      <Float order={2} leaving={leaving} className="grid grid-cols-2 items-stretch gap-3">
         <StoriesReadCard total={sessions.length} />
         <HabitCard habitKey={habitToPractice(sessions)} />
-      </div>
+      </Float>
       {/* Reading level and comprehension share one card with a switch. */}
+      <Float order={3} leaving={leaving}>
       <WeeklyFacesCard
         views={[
           {
@@ -177,13 +236,20 @@ function Progress({ sessions, linkSearch }) {
           },
         ]}
       />
-      <SpeedWeeksCard weeks={weeks.map((w) => ({ label: w.label, wpm: weekWpm(w.sessions) }))} />
-      <TrickyWordsCard words={trickyWords(sessions)} />
-      <PastReadings
-        sessions={sessions}
-        historyPath={`/history${linkSearch}`}
-        readingPath={(s) => `/history/${s.id}${linkSearch}`}
-      />
+      </Float>
+      <Float order={4} leaving={leaving}>
+        <SpeedWeeksCard weeks={weeks.map((w) => ({ label: w.label, wpm: weekWpm(w.sessions) }))} />
+      </Float>
+      <Float order={5} leaving={leaving}>
+        <TrickyWordsCard words={trickyWords(sessions)} />
+      </Float>
+      <Float order={6} leaving={leaving}>
+        <PastReadings
+          sessions={sessions}
+          historyPath={`/history${linkSearch}`}
+          readingPath={(s) => `/history/${s.id}${linkSearch}`}
+        />
+      </Float>
     </>
   )
 }
