@@ -37,7 +37,7 @@ export function StoryLevelPicker({ value, suggested, onChange, onClose }) {
         aria-modal="true"
         aria-labelledby="story-level-title"
         onClick={(e) => e.stopPropagation()}
-        className="@container relative flex h-fit w-full max-w-[456px] flex-col gap-4 overflow-clip rounded-3xl border-[3px] border-level-edge bg-level-card px-4 pb-5 pt-5 font-display shadow-[0_6px_0_#f2a37c,0_18px_40px_rgba(36,25,23,0.25)]"
+        className="@container relative flex h-fit w-full max-w-[456px] flex-col gap-4 overflow-clip rounded-3xl border-[3px] border-level-edge bg-level-card px-4 pb-5 pt-5 font-display shadow-[0_6px_0_#f2a37c,0_18px_40px_rgba(36,25,23,0.25)] motion-safe:animate-pop-in"
       >
         <span aria-hidden="true" className="pointer-events-none absolute -bottom-20 -left-16 size-52 rounded-full bg-level-blob" />
         <Star className="right-24 top-5 size-4 text-cta" />

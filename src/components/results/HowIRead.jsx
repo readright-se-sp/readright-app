@@ -1,10 +1,10 @@
-import { Star } from '../dashboard/DashboardParts'
 import { HABITS } from './resultsCopy'
-import { CheckIcon } from '../icons'
+import { CheckIcon, LightbulbIcon } from '../icons'
 
 /**
  * "How I Read" — the Phil-IRI behaviour flags, framed as habits to build
- * (SRS NFR-U3). Each row is a sticker: yellow with a star when the habit was
+ * (SRS NFR-U3). Each row is a sticker: yellow with a lightbulb (a tip to
+ * practice — a star would read as a reward) when the habit was
  * noticed, green with a check when it went well — plus a status word and a
  * tip, never colour alone.
  */
@@ -25,11 +25,11 @@ export function HowIRead({ result }) {
             >
               <span
                 aria-hidden="true"
-                className={`relative flex size-10 flex-none items-center justify-center rounded-full ${
+                className={`flex size-10 flex-none items-center justify-center rounded-full ${
                   seen ? 'bg-cta text-level-ink' : 'bg-mint text-white'
                 }`}
               >
-                {seen ? <Star className="inset-0 m-auto size-5" /> : <CheckIcon />}
+                {seen ? <LightbulbIcon /> : <CheckIcon />}
               </span>
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <div className="flex items-start justify-between gap-2">

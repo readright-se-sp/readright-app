@@ -54,7 +54,7 @@ export function ProcessingScreen({ step }) {
       <div className="relative flex flex-col items-center">
         <div className="relative flex items-center justify-center" aria-hidden="true">
           <span className="absolute size-20 rounded-full border-[3px] border-level-pill/40 motion-safe:animate-halo-ping" />
-          <img src="/mascot-head-icon.svg" alt="" className="relative h-[72px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-[52px]" />
+          <img src="/images/mascot/mascot-head-icon.svg" alt="" className="relative h-[72px] w-auto motion-safe:animate-lumi-bob [@media(max-height:680px)]:h-[52px]" />
         </div>
         <div aria-live="polite" className="text-center">
           <h1 className="mt-1.5 text-[28px] font-black leading-[1.15] text-level-ink text-balance">{title}</h1>

@@ -1,28 +1,47 @@
 import { useState } from 'react'
 import { PeachCard, Star } from './DashboardParts'
+import { starPoints } from '../../utils/starPoints'
 
 const OUTLINE = '#7a3b2e'
 
 /**
- * A face that looks the same for a level in every week: 'smile' / 'flat' are
- * filled with the level colour; 'big' (the top level) is always the cheery
- * cream face with happy closed eyes and pink cheeks. `large` for this week.
+ * A face that looks the same for a level in every week, matching the results
+ * page's faces:
+ *   'smile' (Frustration / Keep going) — filled with the level colour, dot eyes;
+ *   'big' (Instructional / Good job) — the cheery cream face, happy closed eyes, grin;
+ *   'wow' (Independent / Super reader) — the results page's Super Reader face:
+ *     green, yellow star eyes, open grin with a tongue.
+ * Pink cheeks on 'big' and 'wow'. `large` for this week.
  */
 function WeekFace({ mood, fill, large }) {
   const cheery = mood === 'big'
-  const eyes = cheery
-    ? <path d="M12.5 19.5Q15.5 15 18.5 19.5M25.5 19.5Q28.5 15 31.5 19.5" fill="none" stroke={OUTLINE} strokeWidth="2.6" strokeLinecap="round" />
-    : <><circle cx="16" cy="18" r="2.6" fill={OUTLINE} /><circle cx="28" cy="18" r="2.6" fill={OUTLINE} /></>
+  const wow = mood === 'wow'
+  const star = 'var(--color-result-face-star)'
+  let eyes
+  if (wow) {
+    eyes = [14.5, 29.5].map((cx) => (
+      <polygon key={cx} points={starPoints(cx, 16.5)} fill={star} stroke={star} strokeWidth="1.2" strokeLinejoin="round" />
+    ))
+  } else if (cheery) {
+    eyes = <path d="M12.5 19.5Q15.5 15 18.5 19.5M25.5 19.5Q28.5 15 31.5 19.5" fill="none" stroke={OUTLINE} strokeWidth="2.6" strokeLinecap="round" />
+  } else {
+    eyes = <><circle cx="16" cy="18" r="2.6" fill={OUTLINE} /><circle cx="28" cy="18" r="2.6" fill={OUTLINE} /></>
+  }
   return (
     <svg viewBox="0 0 44 44" aria-hidden="true" className={large ? 'size-14 shrink-0' : 'size-11 shrink-0'}>
       {/* No outline, to match Lumi's soft look; a soft shadow keeps the face clear of its tile. */}
       <circle cx="22" cy="23.5" r="20" fill="rgb(138 68 54 / 0.16)" />
       <circle cx="22" cy="22" r="20" fill={cheery ? '#fff7ee' : fill} />
       {eyes}
-      {mood === 'big' && <path d="M13 25Q22 35 31 25Z" fill={OUTLINE} />}
+      {cheery && <path d="M13 25Q22 35 31 25Z" fill={OUTLINE} />}
+      {wow && (
+        <>
+          <path d="M14 25Q22 23.5 30 25Q29.5 36 22 36Q14.5 36 14 25Z" fill="var(--color-result-face-mouth)" />
+          <path d="M17 33.2Q22 29.5 27 33.2Q25 36 22 36Q19 36 17 33.2Z" fill="#ef6f84" />
+        </>
+      )}
       {mood === 'smile' && <path d="M15 26Q22 32 29 26" fill="none" stroke={OUTLINE} strokeWidth="2.6" strokeLinecap="round" />}
-      {mood === 'flat' && <path d="M16 28H28" fill="none" stroke={OUTLINE} strokeWidth="2.6" strokeLinecap="round" />}
-      {cheery && <><ellipse cx="10.5" cy="26.5" rx="3" ry="2" fill="#ff9fb0" /><ellipse cx="33.5" cy="26.5" rx="3" ry="2" fill="#ff9fb0" /></>}
+      {(cheery || wow) && <><ellipse cx="10.5" cy="26.5" rx="3" ry="2" fill="#ff9fb0" /><ellipse cx="33.5" cy="26.5" rx="3" ry="2" fill="#ff9fb0" /></>}
     </svg>
   )
 }

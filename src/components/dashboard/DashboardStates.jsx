@@ -13,7 +13,7 @@ export function DashboardEmpty() {
   return (
     <>
       <section className="flex flex-col items-center gap-3.5 px-3 pb-2 pt-5 text-center">
-        <img src="/mascot-reading.svg" alt="" className="w-32 drop-shadow-[0_0_12px_rgb(255_218_140/0.75)] motion-safe:animate-lumi-bob" />
+        <img src="/images/mascot/mascot-reading.svg" alt="" className="w-32 drop-shadow-[0_0_12px_rgb(255_218_140/0.75)] motion-safe:animate-lumi-bob" />
         <p className="max-w-[290px] text-[22px] font-black leading-tight text-balance">
           Read your first story to see your progress here!
         </p>
@@ -45,7 +45,7 @@ export function DashboardError({ onRetry }) {
       role="alert"
       className="flex flex-col items-center gap-3.5 rounded-3xl border-2 border-card-border bg-peach px-5 py-6 text-center shadow-card"
     >
-      <img src="/mascot-reading.svg" alt="" className="w-[76px]" />
+      <img src="/images/mascot/mascot-reading.svg" alt="" className="w-[76px]" />
       <h2 className="text-[22px] font-black">Your progress didn’t load</h2>
       <p className="max-w-[300px] text-[17px] leading-[1.45] text-ink-soft">
         We couldn’t load your progress. Check your internet and tap Try again.

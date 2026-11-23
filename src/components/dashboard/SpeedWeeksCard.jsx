@@ -75,7 +75,7 @@ function Lane({ number, label, wpm, pct, current, flown }) {
               {/* Dynamic track geometry is the one place inline styles are needed. */}
               <div className={`absolute left-0 top-1/2 -translate-y-1/2 rounded-full ${current ? 'h-2.5 bg-white/75' : 'h-2 bg-white/40'} ${motion}`} style={{ width: at(beePx / 2) }} />
               <div className={`absolute top-1/2 flex -translate-y-1/2 items-center ${motion}`} style={{ left: at() }}>
-                <img src="/mascot-reading.svg" alt="" style={{ width: beePx }} className="shrink-0 motion-safe:animate-lumi-bob" />
+                <img src="/images/mascot/mascot-reading.svg" alt="" style={{ width: beePx }} className="shrink-0 motion-safe:animate-lumi-bob" />
                 <span className={`ml-0.5 rounded-full border-2 border-level-tile-edge font-black ${current ? 'bg-track-yellow px-2 py-0.5 text-base text-level-ink' : 'bg-white px-1.5 text-sm text-level-ink'}`}>
                   {wpm}
                 </span>

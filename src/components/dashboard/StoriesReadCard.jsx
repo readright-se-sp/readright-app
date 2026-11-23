@@ -1,23 +1,38 @@
 import { GridPattern, Star } from './DashboardParts'
 
+/** The right-hand page: paper, spine shading and lines. Drawn twice — once
+ * still, once as the page that turns. */
+function RightPage({ soft }) {
+  return (
+    <>
+      <path d="M25 10 42 8V31L25 33Z" {...soft('#fff')} />
+      {/* Pale shading where the page dips into the spine. */}
+      <path d="M25 10 28.5 9.6V32.6L25 33Z" fill="#dfe8fd" />
+      <path d="M31 15 31.5 14.9M31.5 19.5 39 18.6M31.5 24 39 23.1" stroke="#8fb0f0" strokeWidth="2" strokeLinecap="round" />
+    </>
+  )
+}
+
 /**
- * An open book: pink cover, white pages with lines, yellow bookmark. No
- * outline, to match Lumi's soft look — each shape is stroked in its own
- * colour only to round its corners, and shading keeps the parts apart.
+ * An open book: pink cover, white pages with lines. No outline, to match
+ * Lumi's soft look — each shape is stroked in its own colour only to round
+ * its corners, and shading keeps the parts apart. A copy of the right page
+ * flips over the spine (x = 24) onto the left page every few seconds.
  */
 function OpenBook() {
   const soft = (color) => ({ fill: color, stroke: color, strokeWidth: 2.2, strokeLinejoin: 'round' })
   return (
-    <svg aria-hidden="true" viewBox="0 0 48 40" className="w-[64%]">
+    <svg aria-hidden="true" viewBox="0 0 48 40" className="w-[64%] overflow-visible">
       <path d="M3 12 24 14 45 12V35L24 37 3 35Z" {...soft('#e0507c')} />
       <path d="M21 13.7 24 14 27 13.7V36.7L24 37 21 36.7Z" fill="#c23d66" />
       <path d="M6 8 23 10V33L6 31Z" {...soft('#fff')} />
-      <path d="M25 10 42 8V31L25 33Z" {...soft('#fff')} />
-      {/* Pale shading where the pages dip into the spine. */}
       <path d="M19.5 9.6 23 10V33L19.5 32.6Z" fill="#dfe8fd" />
-      <path d="M25 10 28.5 9.6V32.6L25 33Z" fill="#dfe8fd" />
-      <path d="M9.5 14.5 17 15.4M9.5 19 17 19.9M9.5 23.5 15 24.2M31 15 31.5 14.9M31.5 19.5 39 18.6M31.5 24 39 23.1" stroke="#8fb0f0" strokeWidth="2" strokeLinecap="round" />
-      <path d="M33.5 5.5H38V17L35.75 15 33.5 17Z" {...soft('#ffc43d')} strokeWidth="1.2" />
+      <path d="M9.5 14.5 17 15.4M9.5 19 17 19.9M9.5 23.5 15 24.2" stroke="#8fb0f0" strokeWidth="2" strokeLinecap="round" />
+      <RightPage soft={soft} />
+      {/* Starts hidden so the book looks still when motion is turned off. */}
+      <g className="opacity-0 origin-[24px_20px] [transform-box:view-box] motion-safe:animate-page-turn">
+        <RightPage soft={soft} />
+      </g>
     </svg>
   )
 }

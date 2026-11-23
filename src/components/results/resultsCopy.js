@@ -38,7 +38,7 @@ export const READING_LEVELS = {
 export const COMPREHENSION = {
   1: { title: 'Keep Going!', message: 'Let’s read it again together — you’ll understand even more!', face: 'fill-track-yellow', mouth: 'smile', ink: 'text-result-olive' },
   2: { title: 'Good Job!', message: 'You understood a lot of the story!', face: 'fill-result-face-blue', mouth: 'grin', ink: 'text-tile-blue-ink' },
-  3: { title: 'Super Reader!', message: 'You understood the story really well!', face: 'fill-result-face-green', mouth: 'grin', ink: 'text-goal' },
+  3: { title: 'Super Reader!', message: 'You understood the story really well!', face: 'fill-result-face-green', mouth: 'wow', ink: 'text-goal' },
 }
 
 // "Word Detective" boxes, one per Phil-IRI miscue type. The keys and their order

@@ -65,7 +65,7 @@ export function SpeedCard({ wpm }) {
             </span>
             <div className={`absolute -left-2 top-1/2 h-2.5 -translate-y-1/2 rounded-full bg-white/60 ${motion}`} style={{ width: at(LUMI_PX / 2 + 8) }} />
             <img
-              src="/mascot-reading.svg"
+              src="/images/mascot/mascot-reading.svg"
               alt=""
               className={`absolute top-1/2 -translate-y-1/2 ${motion}`}
               style={{ left: at(), width: LUMI_PX }}

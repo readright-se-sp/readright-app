@@ -3,6 +3,7 @@
  */
 import { useId } from 'react'
 import { LISTEN_BUTTON } from '../ui/stickerStyles'
+import { starPoints } from '../../utils/starPoints'
 
 /** A five-point sparkle, positioned by the caller (`className` sets spot, size, colour). */
 export function Star({ className }) {
@@ -108,16 +109,30 @@ export function DashboardCard({ title, className = '', children, ...rest }) {
   )
 }
 
-/** A simple face drawn in the current text colour: 'big' grin, 'smile' or 'flat'. */
+/**
+ * A simple face for a level badge, drawn in the current text colour, matching
+ * the results page's faces: 'smile' (Frustration / Keep going), 'big' grin
+ * (Instructional / Good job), or 'wow' — yellow star eyes and a big grin
+ * (Independent / Super reader).
+ */
 export function Face({ mood, size = 44 }) {
+  const wow = mood === 'wow'
   return (
     <svg width={size} height={size} viewBox="0 0 44 44" aria-hidden="true" className="shrink-0">
       <circle cx="22" cy="22" r="20" fill="#fff9f6" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx="16" cy="18" r="2.6" fill="currentColor" />
-      <circle cx="28" cy="18" r="2.6" fill="currentColor" />
-      {mood === 'big' && <path d="M13 25 Q22 35 31 25 Z" fill="currentColor" />}
+      {wow ? (
+        // Outlined in the badge colour so the yellow stays clear on the cream face.
+        [15, 29].map((cx) => (
+          <polygon key={cx} points={starPoints(cx, 17.5, 6.4, 3)} fill="var(--color-result-face-star)" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
+        ))
+      ) : (
+        <>
+          <circle cx="16" cy="18" r="2.6" fill="currentColor" />
+          <circle cx="28" cy="18" r="2.6" fill="currentColor" />
+        </>
+      )}
+      {(mood === 'big' || wow) && <path d="M13 25 Q22 35 31 25 Z" fill="currentColor" />}
       {mood === 'smile' && <path d="M15 26 Q22 32 29 26" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />}
-      {mood === 'flat' && <path d="M16 28 H28" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />}
     </svg>
   )
 }

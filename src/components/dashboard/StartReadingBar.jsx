@@ -15,9 +15,13 @@ import { DEFAULT_GRADE, toPassageGrade } from '../../utils/gradeLevels'
  * column's px-4/pb-8 so scrolled content doesn't show beside it; `mt-auto` (with a
  * screen-tall column) keeps it at the bottom when the page is short. z-20 keeps
  * it (and the picker's overlay) above the sticky navbar (z-10).
+ *
+ * `onNavigate` (optional) replaces React Router's navigate — the dashboard
+ * passes its leaveTo so the cards float out before the reading starts.
  */
-export function StartReadingBar() {
-  const navigate = useNavigate()
+export function StartReadingBar({ onNavigate }) {
+  const routerNavigate = useNavigate()
+  const navigate = onNavigate ?? routerNavigate
   const { user } = useCurrentUser()
 
   // Story grade for the next reading. Until the learner picks one, show the

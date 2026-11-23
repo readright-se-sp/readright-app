@@ -4,18 +4,25 @@ import { GridPattern, Star } from './DashboardParts'
 /**
  * A little face sticker: two googly eyes and pink cheeks (decoration only).
  * No outline on the eyes, to match Lumi's soft look; a soft shadow under each
- * one keeps the white visible on the cream sticker.
+ * one keeps the white visible on the cream sticker. The eyes blink every few
+ * seconds (squashed flat from their middle, shadow included), and the pupils
+ * glance around a little.
  */
 function FaceSticker() {
   return (
     <span aria-hidden="true" className="relative mt-auto ml-1 w-[48%] min-w-[84px] shrink-0 -rotate-6 rounded-[18px] border-[3px] border-tile-pink-deep bg-sticker px-2 py-1.5 shadow-sticker-pink">
       <svg viewBox="0 0 60 34" className="w-full">
-        <circle cx="20" cy="16.5" r="8" fill="#f2d6cc" />
-        <circle cx="40" cy="16.5" r="8" fill="#f2d6cc" />
-        <circle cx="20" cy="15" r="8" fill="#fff" />
-        <circle cx="40" cy="15" r="8" fill="#fff" />
-        <circle cx="21.5" cy="16" r="3.8" fill="#2a1a12" />
-        <circle cx="41.5" cy="16" r="3.8" fill="#2a1a12" />
+        <g className="origin-center [transform-box:fill-box] motion-safe:animate-eye-blink">
+          <circle cx="20" cy="16.5" r="8" fill="#f2d6cc" />
+          <circle cx="40" cy="16.5" r="8" fill="#f2d6cc" />
+          <circle cx="20" cy="15" r="8" fill="#fff" />
+          <circle cx="40" cy="15" r="8" fill="#fff" />
+          {/* Pupils look around a little (inside the blink group, so they squash too). */}
+          <g className="motion-safe:animate-eye-look">
+            <circle cx="21.5" cy="16" r="3.8" fill="#2a1a12" />
+            <circle cx="41.5" cy="16" r="3.8" fill="#2a1a12" />
+          </g>
+        </g>
         <ellipse cx="9" cy="26" rx="4.2" ry="2.5" fill="#ff8fa3" />
         <ellipse cx="51" cy="26" rx="4.2" ry="2.5" fill="#ff8fa3" />
       </svg>

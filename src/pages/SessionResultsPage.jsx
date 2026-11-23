@@ -38,14 +38,17 @@
  *
  * SRS NFR-P2: Must render within 3 seconds of receiving data.
  */
+import { useEffect } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { sampleResults } from '../data/sampleResults'
 import { isDevSample } from '../utils/devPreview'
 import { isV1Enabled } from '../lib/api'
 import { useSessionStorage } from '../hooks/useSessionStorage'
 import { useCurrentUser } from '../hooks/useCurrentUser'
+import { SOUNDS, useSoundEffect } from '../hooks/useTapSound'
 import { LogoMark } from '../components/icons'
 import { Star } from '../components/dashboard/DashboardParts'
+import { SkyBackground } from '../components/ui/SkyBackground'
 import { ComprehensionCard } from '../components/results/ComprehensionCard'
 import { ReadingScoreCard } from '../components/results/ReadingScoreCard'
 import { SpeedCard } from '../components/results/SpeedCard'
@@ -78,6 +81,18 @@ export default function SessionResultsPage() {
   const passageId = isDevSample(result) || isV1Enabled() ? null : (state?.passage?.id ?? null)
   const { saveStatus } = useSessionStorage(result, passageId)
 
+  // A little cheer as the results first appear. Keyed on "is there a result"
+  // (not the result object, which is rebuilt each render for samples) so it
+  // plays once; the cleanup cancels the StrictMode dev double-run. A short
+  // delay lets the page paint first.
+  const playCheer = useSoundEffect(SOUNDS.resultsReveal)
+  const hasResult = !!result
+  useEffect(() => {
+    if (!hasResult) return
+    const t = setTimeout(playCheer, 250)
+    return () => clearTimeout(t)
+  }, [hasResult, playCheer])
+
   // Results only exist right after a reading — opened directly (bookmark,
   // refresh), there's nothing to show, so go back to the dashboard.
   if (!result) return <Navigate to="/dashboard" replace />
@@ -86,8 +101,11 @@ export default function SessionResultsPage() {
   const storyTitle = state?.passage?.title
 
   return (
-    <div className="min-h-dvh bg-level-card font-display text-ink sm:bg-divider sm:py-6">
-      <div className="relative mx-auto flex w-full max-w-[480px] flex-col gap-4 overflow-clip bg-level-card px-4.5 pb-8 sm:rounded-[32px] sm:border-[3px] sm:border-level-edge">
+    <div className="relative min-h-dvh bg-sky-bottom px-2 py-2 font-display text-ink sm:px-3 sm:py-6">
+      {/* The same sky + forest as the reading screens, fixed so the long card scrolls over it. */}
+      <SkyBackground fixed forest />
+      {/* Pops in with the cheer. Grows from the top, since the card is taller than the screen. */}
+      <div className="relative mx-auto flex w-full max-w-[480px] origin-top flex-col gap-4 overflow-clip rounded-[32px] border-[3px] border-level-edge bg-level-card px-4.5 pb-8 motion-safe:animate-pop-in">
         {/* Big soft circle behind the header + Lumi, with a few sparkles. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 h-[300px]">
           <span className="absolute -top-[150px] left-1/2 size-[420px] -translate-x-1/2 rounded-full bg-level-blob" />
@@ -115,7 +133,7 @@ export default function SessionResultsPage() {
         </header>
 
         <div className="relative flex flex-col items-center pb-2 text-center">
-          <img src="/mascot-reading.svg" alt="" className="w-[150px] motion-safe:animate-lumi-bob" />
+          <img src="/images/mascot/mascot-reading.svg" alt="" className="w-[150px] motion-safe:animate-lumi-bob" />
           <h1 className="mt-5 text-[32px] font-black leading-[1.1] text-balance text-level-ink">
             {firstName ? `You did it, ${firstName}!` : 'You did it!'}
           </h1>

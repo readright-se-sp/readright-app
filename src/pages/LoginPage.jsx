@@ -48,7 +48,7 @@ export default function LoginPage() {
         <div className="flex min-h-[30dvh] flex-1 items-end justify-center px-4 pb-5 pt-[max(2.5rem,env(safe-area-inset-top))] sm:flex-none sm:pt-6">
           <div className="relative flex items-center justify-center">
             <div aria-hidden="true" className="absolute size-[150px] rounded-full bg-white/50 blur-[18px]" />
-            <img src="/mascot-reading.svg" alt="" className="relative h-[170px] w-auto motion-safe:animate-lumi-bob" />
+            <img src="/images/mascot/mascot-reading.svg" alt="" className="relative h-[170px] w-auto motion-safe:animate-lumi-bob" />
           </div>
         </div>
 

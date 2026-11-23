@@ -42,7 +42,7 @@ export function LeaveSessionDialog({ onStay, onLeave }) {
         className="flex w-full max-w-[400px] flex-col items-center rounded-[28px] bg-white px-6 pb-6 pt-7 text-center font-display text-ink shadow-ledge-blue"
       >
         <span className="flex size-28 items-center justify-center rounded-full bg-level-blob">
-          <img src="/mascot-reading.svg" alt="" className="h-auto w-[84px]" />
+          <img src="/images/mascot/mascot-reading.svg" alt="" className="h-auto w-[84px]" />
         </span>
         <h2 id="leave-title" className="mt-3 text-[26px] font-black leading-tight text-level-ink">
           Stop reading now?
